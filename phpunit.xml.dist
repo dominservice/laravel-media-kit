@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="vendor/autoload.php"
+         colors="true"
+         verbose="true"
+         stopOnFailure="false"
+         failOnRisky="true"
+         failOnWarning="true">
+    <testsuites>
+        <testsuite name="MediaKit Test Suite">
+            <directory suffix="Test.php">tests</directory>
+        </testsuite>
+    </testsuites>
+
+    <php>
+        <env name="APP_KEY" value="base64:2bK8uK2k0s3pE9n3y0k7+M0V8+8Y9u8+3E4W7Yk8b9I="/>
+        <env name="CACHE_DRIVER" value="array"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="FILESYSTEM_DRIVER" value="public"/>
+    </php>
+</phpunit>
