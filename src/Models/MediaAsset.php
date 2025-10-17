@@ -8,6 +8,27 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Str;
 
+/**
+ * @property string $id
+ * @property string $model_type
+ * @property string $model_id
+ * @property string $collection
+ * @property string $disk
+ * @property string $original_path
+ * @property string $original_mime
+ * @property string $original_ext
+ * @property int $original_size
+ * @property int|null $width
+ * @property int|null $height
+ * @property string $hash
+ * @property array|null $meta
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * 
+ * @property-read \Illuminate\Database\Eloquent\Model $model
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, MediaVariant> $variants
+ * @property-read int|null $variants_count
+ */
 class MediaAsset extends Model
 {
     use HasUuidPrimary;
