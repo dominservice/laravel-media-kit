@@ -33,10 +33,10 @@
 
 @if($asset)
     <picture>
-        <source type="image/avif" srcset="{{ route('mediakit.media.show', [$asset->id, $display, $asset->id.'-'.$display.'.avif']) }}" />
-        <source type="image/webp" srcset="{{ route('mediakit.media.show', [$asset->id, $display, $asset->id.'-'.$display.'.webp']) }}" />
+        <source type="image/avif" srcset="{{ route('mediakit.media.show', [$asset->uuid, $display, $asset->uuid.'-'.$display.'.avif']) }}" />
+        <source type="image/webp" srcset="{{ route('mediakit.media.show', [$asset->uuid, $display, $asset->uuid.'-'.$display.'.webp']) }}" />
         <img
-                src="{{ route('mediakit.media.show', [$asset->id, $display, $asset->id.'-'.$display.'.jpg']) }}"
+                src="{{ route('mediakit.media.show', [$asset->uuid, $display, $asset->uuid.'-'.$display.'.jpg']) }}"
                 alt="{{ $alt }}"
                 class="{{ $class }}"
                 loading="lazy"

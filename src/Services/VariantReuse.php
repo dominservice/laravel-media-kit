@@ -39,7 +39,7 @@ class VariantReuse
         $sql = "
             SELECT mv.*, ma.disk
             FROM media_assets ma
-            JOIN media_variants mv ON mv.asset_id = ma.id
+            JOIN media_variants mv ON mv.asset_uuid = ma.uuid
             WHERE ma.hash = ?
               AND mv.name = ?
               AND mv.format = ?

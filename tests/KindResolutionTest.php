@@ -47,7 +47,7 @@ class KindResolutionTest extends TestCase
         // w testowym Post mamy tylko HasMedia — symulujemy wywołanie mediaKindUrl bez traita:
         $asset = $post->media()->where('collection','avatar')->first();
 
-        $url = route('mediakit.media.show', [$asset->id, 'md', $asset->id.'-md.jpg']);
+        $url = route('mediakit.media.show', [$asset->uuid, 'md', $asset->uuid.'-md.jpg']);
         $this->assertNotEmpty($url);
     }
 }

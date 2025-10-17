@@ -10,16 +10,16 @@
         {{-- preferowane źródła nowoczesne --}}
         <source
                 type="image/avif"
-                srcset="{{ route('mediakit.media.show', [$asset->id, $variant, $asset->id.'-'.$variant.'.avif']) }}"
+                srcset="{{ route('mediakit.media.show', [$asset->uuid, $variant, $asset->uuid.'-'.$variant.'.avif']) }}"
         />
         <source
                 type="image/webp"
-                srcset="{{ route('mediakit.media.show', [$asset->id, $variant, $asset->id.'-'.$variant.'.webp']) }}"
+                srcset="{{ route('mediakit.media.show', [$asset->uuid, $variant, $asset->uuid.'-'.$variant.'.webp']) }}"
         />
 
         {{-- fallback JPEG (lub PNG jeśli wolisz) --}}
         <img
-                src="{{ route('mediakit.media.show', [$asset->id, $variant, $asset->id.'-'.$variant.'.jpg']) }}"
+                src="{{ route('mediakit.media.show', [$asset->uuid, $variant, $asset->uuid.'-'.$variant.'.jpg']) }}"
                 alt="{{ $alt }}"
                 class="{{ $class }}"
                 loading="lazy"

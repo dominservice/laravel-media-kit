@@ -10,7 +10,7 @@ class MediaVariant extends Model
     protected $table = 'media_variants';
 
     protected $fillable = [
-        'asset_id',
+        'asset_uuid',
         'name', 'format',
         'disk', 'path',
         'width', 'height', 'quality', 'size',
@@ -24,6 +24,6 @@ class MediaVariant extends Model
 
     public function asset(): BelongsTo
     {
-        return $this->belongsTo(MediaAsset::class, 'asset_id');
+        return $this->belongsTo(MediaAsset::class, 'asset_uuid');
     }
 }

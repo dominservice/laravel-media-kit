@@ -11,7 +11,7 @@ return new class extends Migration
         // Główna tabela plików
         Schema::create('media_assets', function (Blueprint $table) {
             // UUID jako klucz główny (kompatybilnie dla L9–L12)
-            $table->uuid('id')->primary();
+            $table->uuid()->primary();
 
             // Polimorficzne powiązanie z modelem (model_type, model_id NULLable)
             $table->nullableMorphs('model');
@@ -46,7 +46,7 @@ return new class extends Migration
         Schema::create('media_variants', function (Blueprint $table) {
             $table->bigIncrements('id');
 
-            $table->uuid('asset_id');                 // FK do media_assets.id
+            $table->uuid('asset_uuid');                 // FK do media_assets.id
             $table->string('name');                   // np. thumb, sm, md, lg, xl
             $table->string('format', 8);              // avif|webp|jpeg|png
             $table->string('disk');                   // zwykle taki sam jak w assets
@@ -63,8 +63,8 @@ return new class extends Migration
             $table->timestamps();
 
             // Ograniczenia i indeksy
-            $table->foreign('asset_id')->references('id')->on('media_assets')->cascadeOnDelete();
-            $table->unique(['asset_id', 'name', 'format']); // 1 wariant/form at per asset
+            $table->foreign('asset_uuid')->references('uuid')->on('media_assets')->cascadeOnDelete();
+            $table->unique(['asset_uuid', 'name', 'format']); // 1 wariant/form at per asset
             $table->index(['name', 'format']);
             $table->index(['disk']);
         });

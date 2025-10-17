@@ -49,7 +49,7 @@
             $posterAsset = $model->media()->where('collection', $posterCollection)->latest()->first();
             if ($posterAsset) {
                 $pv = $posterVariant ?: (KindRegistry::displayVariant($posterKind, 'md'));
-                $posterUrl = route('mediakit.media.show', [$posterAsset->id, $pv, $posterAsset->id.'-'.$pv.'.jpg']);
+                $posterUrl = route('mediakit.media.show', [$posterAsset->uuid, $pv, $posterAsset->uuid.'-'.$pv.'.jpg']);
             }
         }
 

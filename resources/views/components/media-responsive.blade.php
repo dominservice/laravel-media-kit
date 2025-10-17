@@ -15,7 +15,7 @@
         foreach ($variants as $v) {
             $w = $widthMap[$v] ?? null;
             if (!$w) continue; // pomiń warianty bez zdefiniowanej szerokości
-            $url = route('mediakit.media.show', [$asset->id, $v, $asset->id . '-' . $v . '.' . $format]);
+            $url = route('mediakit.media.show', [$asset->uuid, $v, $asset->uuid . '-' . $v . '.' . $format]);
             $parts[] = $url . ' ' . $w . 'w';
         }
         return implode(', ', $parts);
@@ -27,7 +27,7 @@
     // Fallback: użyj środkowego wariantu (np. md) jeśli istnieje, w przeciwnym razie pierwszego
     $fallbackVariant = in_array('md', $variants, true) ? 'md' : ($variants[intval(floor(count($variants)/2))] ?? ($variants[0] ?? 'md'));
     $fallbackUrl = $asset
-        ? route('mediakit.media.show', [$asset->id, $fallbackVariant, $asset->id . '-' . $fallbackVariant . '.jpg'])
+        ? route('mediakit.media.show', [$asset->uuid, $fallbackVariant, $asset->uuid . '-' . $fallbackVariant . '.jpg'])
         : '';
 @endphp
 

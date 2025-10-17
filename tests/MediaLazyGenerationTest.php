@@ -28,13 +28,13 @@ class MediaLazyGenerationTest extends TestCase
         $asset = $post->addMedia($uploaded, 'featured');
 
         // przed wywołaniem route wariant 'md' nie istnieje
-        $this->assertDatabaseMissing('media_variants', ['asset_id' => $asset->id, 'name' => 'md', 'format' => 'jpeg']);
+        $this->assertDatabaseMissing('media_variants', ['asset_uuid' => $asset->uuid, 'name' => 'md', 'format' => 'jpeg']);
 
-        $url = route('mediakit.media.show', [$asset->id, 'md', $asset->id.'-md.jpg']);
+        $url = route('mediakit.media.show', [$asset->uuid, 'md', $asset->uuid.'-md.jpg']);
         $resp = $this->get($url);
         $resp->assertOk()->assertHeader('Content-Type', 'image/jpeg');
 
         // po wywołaniu powinien istnieć
-        $this->assertDatabaseHas('media_variants', ['asset_id' => $asset->id, 'name' => 'md', 'format' => 'jpeg']);
+        $this->assertDatabaseHas('media_variants', ['asset_uuid' => $asset->uuid, 'name' => 'md', 'format' => 'jpeg']);
     }
 }

@@ -21,7 +21,7 @@ trait HasMediaKinds
         if (!$asset) return null;
 
         // budujemy route do kontrolera mediakit
-        return route('mediakit.media.show', [$asset->id, $display, $asset->id.'-'.$display.'.jpg']);
+        return route('mediakit.media.show', [$asset->uuid, $display, $asset->uuid.'-'.$display.'.jpg']);
     }
 
     public function avatarUrl(?string $variant = null): ?string
@@ -36,7 +36,7 @@ trait HasMediaKinds
 
         $assets = $this->media()->where('collection', $collection)->orderByDesc('created_at')->get();
         return $assets->map(function (MediaAsset $asset) use ($display) {
-            return route('mediakit.media.show', [$asset->id, $display, $asset->id.'-'.$display.'.jpg']);
+            return route('mediakit.media.show', [$asset->uuid, $display, $asset->uuid.'-'.$display.'.jpg']);
         })->all();
     }
 

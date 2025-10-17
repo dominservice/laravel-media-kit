@@ -23,14 +23,14 @@ class VariantReuseTest extends TestCase
         $postA = Post::create(['title' => 'A']);
         $assetA = $postA->addMedia(new UploadedFile($img, 'same.png', 'image/png', null, true), 'gallery');
 
-        $this->assertDatabaseHas('media_variants', ['asset_id' => $assetA->id, 'name' => 'md', 'format' => 'jpeg']);
+        $this->assertDatabaseHas('media_variants', ['asset_uuid' => $assetA->uuid, 'name' => 'md', 'format' => 'jpeg']);
 
         // Post B — ten sam plik, powinien skopiować (meta.reused)
         $postB = Post::create(['title' => 'B']);
         $assetB = $postB->addMedia(new UploadedFile($img, 'same.png', 'image/png', null, true), 'gallery');
 
         $variantB = DB::table('media_variants')
-            ->where(['asset_id' => $assetB->id, 'name' => 'md', 'format' => 'jpeg'])
+            ->where(['asset_uuid' => $assetB->uuid, 'name' => 'md', 'format' => 'jpeg'])
             ->first();
 
         $this->assertNotNull($variantB, 'Variant for assetB not created');

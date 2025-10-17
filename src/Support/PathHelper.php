@@ -16,9 +16,9 @@ class PathHelper
      */
     public static function variantPath(MediaAsset $asset, string $variant, string $format): string
     {
-        $hash = substr($asset->hash ?? sha1($asset->id), 0, 12);
+        $hash = substr($asset->hash ?? sha1($asset->uuid), 0, 12);
         $dir = 'media/variants/' . date('Y/m');
-        $file = $asset->id . '__' . $variant . '__' . $hash . '.' . strtolower($format);
+        $file = $asset->uuid . '__' . $variant . '__' . $hash . '.' . strtolower($format);
         return "{$dir}/{$file}";
     }
 

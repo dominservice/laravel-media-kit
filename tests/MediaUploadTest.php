@@ -21,10 +21,10 @@ class MediaUploadTest extends TestCase
         $asset = $post->addMedia($uploaded, 'featured');
 
         $this->assertInstanceOf(MediaAsset::class, $asset);
-        $this->assertDatabaseHas('media_assets', ['id' => $asset->id, 'collection' => 'featured']);
+        $this->assertDatabaseHas('media_assets', ['id' => $asset->uuid, 'collection' => 'featured']);
 
         // Eager: powinny powstać warianty (jpeg)
-        $this->assertDatabaseHas('media_variants', ['asset_id' => $asset->id, 'name' => 'thumb', 'format' => 'jpeg']);
-        $this->assertDatabaseHas('media_variants', ['asset_id' => $asset->id, 'name' => 'md',    'format' => 'jpeg']);
+        $this->assertDatabaseHas('media_variants', ['asset_uuid' => $asset->uuid, 'name' => 'thumb', 'format' => 'jpeg']);
+        $this->assertDatabaseHas('media_variants', ['asset_uuid' => $asset->uuid, 'name' => 'md',    'format' => 'jpeg']);
     }
 }

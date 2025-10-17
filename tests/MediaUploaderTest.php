@@ -43,13 +43,13 @@ class MediaUploaderTest extends TestCase
 
         $img1 = new UploadedFile(CreatesImage::makePngTemp(120, 90), 'a.png', 'image/png', null, true);
         $asset1 = MediaUploader::uploadImage($post, 'avatar', $img1, 'replace');
-        $this->assertDatabaseHas('media_assets', ['id' => $asset1->id, 'collection' => 'avatar']);
+        $this->assertDatabaseHas('media_assets', ['id' => $asset1->uuid, 'collection' => 'avatar']);
 
         $img2 = new UploadedFile(CreatesImage::makePngTemp(200, 120), 'b.png', 'image/png', null, true);
         $asset2 = MediaUploader::uploadImage($post, 'avatar', $img2, 'replace');
         // poprzedni powinien zniknąć
-        $this->assertDatabaseMissing('media_assets', ['id' => $asset1->id]);
-        $this->assertDatabaseHas('media_assets', ['id' => $asset2->id, 'collection' => 'avatar']);
+        $this->assertDatabaseMissing('media_assets', ['id' => $asset1->uuid]);
+        $this->assertDatabaseHas('media_assets', ['id' => $asset2->uuid, 'collection' => 'avatar']);
     }
 
     public function test_upload_video_renditions_basic(): void

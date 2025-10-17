@@ -147,7 +147,7 @@ MediaUploader::uploadImage($post, 'avatar', $request->file('avatar'), 'replace',
 
 ```php
 $asset = $post->getFirstMedia('featured');
-$url   = route('mediakit.media.show', [$asset->id, 'lg']);
+$url   = route('mediakit.media.show', [$asset->uuid, 'lg']);
 ```
 
 Or via Kind helpers:
