@@ -1,4 +1,8 @@
 # Dominservice Laravel Media Kit
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/dominservice/laravel-media-kit.svg?style=flat-square)](https://packagist.org/packages/dominservice/laravel-media-kit)
+[![Total Downloads](https://img.shields.io/packagist/dt/dominservice/laravel-media-kit.svg?style=flat-square)](https://packagist.org/packages/dominservice/laravel-media-kit)
+[![License](https://img.shields.io/packagist/l/dominservice/laravel-media-kit.svg?style=flat-square)](https://packagist.org/packages/dominservice/laravel-media-kit)
+
 
 **A modern, modular, shared-hosting–friendly media management toolkit for Laravel 9–12.**  
 Process, convert, and deliver images & videos (AVIF, WebP, JPEG, MP4, Cloudflare) with lazy/eager generation, responsive variants, and domain‑level `Kinds`.
