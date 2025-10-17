@@ -2,80 +2,36 @@
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Dysk do zapisu plików
-    |--------------------------------------------------------------------------
-    |
-    | Nazwa dysku zdefiniowanego w config/filesystems.php.
-    | Najczęściej będzie to "public" lub "s3".
-    |
-    */
+    // Dysk domyślny (można nadpisać per-kind)
     'disk' => env('MEDIA_KIT_DISK', 'public'),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Kolejność preferowanych formatów
-    |--------------------------------------------------------------------------
-    */
+    // Kolejność preferowanych formatów
     'formats_priority' => ['avif', 'webp', 'jpeg', 'png'],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Jakość dla poszczególnych formatów
-    |--------------------------------------------------------------------------
-    */
+    // Jakości domyślne
     'default_quality' => [
         'avif' => 45,
         'webp' => 75,
         'jpeg' => 72,
-        'png'  => null, // bezstratnie
+        'png'  => null,
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Czy usuwać metadane (EXIF/IPTC)
-    |--------------------------------------------------------------------------
-    */
+    // Usuwanie EXIF/IPTC
     'strip_metadata' => true,
 
-    /*
-    |--------------------------------------------------------------------------
-    | Progresywne JPEG
-    |--------------------------------------------------------------------------
-    */
+    // Progresywny JPEG
     'progressive_jpeg' => true,
 
-    /*
-    |--------------------------------------------------------------------------
-    | Czy powiększać obrazy poniżej rozmiaru docelowego
-    |--------------------------------------------------------------------------
-    */
+    // Nie powiększaj obrazów poniżej docelowego rozmiaru
     'upscale' => false,
 
-    /*
-    |--------------------------------------------------------------------------
-    | Tło przy konwersji przezroczystych obrazów do JPEG
-    |--------------------------------------------------------------------------
-    */
+    // Tło przy konwersji przezroczystości do JPEG
     'background_for_transparent_to_jpeg' => '#ffffff',
 
-    /*
-    |--------------------------------------------------------------------------
-    | Tryb generacji wariantów
-    |--------------------------------------------------------------------------
-    |
-    | eager – generuje wszystkie warianty natychmiast po uploadzie
-    | lazy  – generuje wariant dopiero przy pierwszym żądaniu
-    |
-    */
+    // Tryb generacji wariantów: eager | lazy
     'mode' => env('MEDIA_KIT_MODE', 'eager'),
 
-    /*
-    |--------------------------------------------------------------------------
-    | Definicje wariantów (rozmiary)
-    |--------------------------------------------------------------------------
-    */
+    // Definicje wariantów (rozmiary)
     'variants' => [
         'thumb' => ['fit' => [320, 320]],
         'sm'    => ['width' => 480],
@@ -86,23 +42,15 @@ return [
         'lg@2x' => ['width' => 2400],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Które formaty są włączone dla poszczególnych wariantów
-    |--------------------------------------------------------------------------
-    */
+    // Włączone formaty dla wariantów
     'enabled_formats_per_variant' => [
         'thumb' => ['avif', 'webp', 'jpeg'],
         '*'     => ['avif', 'webp', 'jpeg', 'png'],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Responsywność (srcset / sizes)
-    |--------------------------------------------------------------------------
-    */
+    // Responsywność (srcset/sizes)
     'responsive' => [
-        'order' => ['sm', 'md', 'lg', 'xl'],
+        'order' => ['sm','md','lg','xl'],
         'widths' => [
             'sm' => 480,
             'md' => 768,
@@ -112,11 +60,7 @@ return [
         'default_sizes' => '(min-width: 1200px) 1200px, (min-width: 768px) 768px, 100vw',
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | CDN i podpisywanie URL (CloudFront)
-    |--------------------------------------------------------------------------
-    */
+    // CDN + podpisywanie
     'cdn' => [
         'base_url' => env('MEDIA_KIT_CDN', ''),
         'signer' => env('MEDIA_KIT_CDN_SIGNER', 'none'), // none | cloudfront
@@ -127,11 +71,7 @@ return [
         ],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Wideo (lokalne lub zdalne)
-    |--------------------------------------------------------------------------
-    */
+    // Wideo (lokalne lub zdalne)
     'video' => [
         'mode' => env('MEDIA_KIT_VIDEO_MODE', 'basic'), // basic | remote
         'remote' => [
@@ -141,38 +81,35 @@ return [
                 'embed_type' => 'iframe', // iframe | videojs
             ],
         ],
+        // w trybie basic możesz trzymać renditions (hd/sd/mobile) w meta assetu
+        'basic_renditions' => ['hd', 'sd', 'mobile'],
         'poster' => ['variant' => 'md'],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Nagłówki cache dla wariantów
-    |--------------------------------------------------------------------------
-    */
+    // Nagłówki cache
     'cache_headers' => [
         'Cache-Control' => 'public, max-age=31536000, immutable',
     ],
 
-    // Reuse/Dedup: ponowne użycie już wygenerowanych wariantów po hash'u oryginału
+    // Reuse/Dedup: kopiowanie wariantów po hash'u
     'cache' => [
-        'enable_reuse' => true,      // jeśli true, przed generacją spróbujemy skopiować wariant z innego assetu o tym samym hash'u
-        'only_same_disk' => true,    // czy ograniczyć reuse do tego samego dysku (zalecane na shared hostingu)
+        'enable_reuse' => true,
+        'only_same_disk' => true,
     ],
 
-    // Opcjonalne cache aplikacyjne (mem/czasowe, nie wymagane do reuse)
+    // Cache aplikacyjny (opcjonalny)
     'cache_store' => [
-        'store' => env('MEDIA_KIT_CACHE_STORE', null), // np. 'file', 'redis' lub null (domyślne)
+        'store' => env('MEDIA_KIT_CACHE_STORE', null), // np. 'file', 'redis' lub null
         'ttl'   => env('MEDIA_KIT_CACHE_TTL', 3600),   // sekundy
     ],
 
-    // Presety filtrów obrazu (kolejność ma znaczenie)
+    // Presety filtrów (przykłady)
     'filters_presets' => [
-        // przykładowe presety
         'grayscale' => [
             ['grayscale' => true],
         ],
         'blur_light' => [
-            ['blur' => 1], // 1-3 (większa wartość = mocniejszy)
+            ['blur' => 1],
         ],
         'watermark_logo' => [
             [
@@ -193,10 +130,36 @@ return [
         ],
     ],
 
-    // (OPCJONALNE) — przykład użycia predefiniowanego preset-u w wariantach:
-    // 'variants' => [
-    //     'thumb' => ['fit' => [320, 320], 'filters' => ['grayscale']],
-    //     'md'    => ['width' => 768,      'filters' => ['watermark_logo']],
-    // ],
-
+    // **NOWOŚĆ**: Warstwa "Kinds" (aliasy, domyślny display, per-kind dysk, dozwolone warianty)
+    'kinds' => [
+        'avatar' => [
+            'collection' => 'avatar',
+            'disk'       => env('MEDIA_KIT_DISK_AVATAR', env('MEDIA_KIT_DISK', 'public')),
+            'display'    => 'lg',
+            'variants'   => ['thumb','sm','md','lg','xl'],
+            'aliases'    => ['photo','featured'],
+        ],
+        'gallery' => [
+            'collection' => 'gallery',
+            'disk'       => env('MEDIA_KIT_DISK_GALLERY', env('MEDIA_KIT_DISK', 'public')),
+            'display'    => 'md',
+            'variants'   => ['sm','md','lg','xl'],
+            'aliases'    => [],
+        ],
+        'video_avatar' => [
+            'collection' => 'video',
+            'disk'       => env('MEDIA_KIT_DISK_VIDEO', env('MEDIA_KIT_DISK', 'public')),
+            // renditions tylko dla trybu 'basic'
+            'renditions' => ['hd','sd','mobile'],
+            'poster_kind'=> 'video_poster',
+            'aliases'    => ['video_main'],
+        ],
+        'video_poster' => [
+            'collection' => 'video_poster',
+            'disk'       => env('MEDIA_KIT_DISK_VIDEO_POSTER', env('MEDIA_KIT_DISK', 'public')),
+            'display'    => 'lg',
+            'variants'   => ['thumb','sm','md','lg'],
+            'aliases'    => ['video_cover'],
+        ],
+    ],
 ];

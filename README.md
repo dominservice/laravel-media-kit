@@ -1,195 +1,312 @@
+# Dominservice Laravel Media Kit
 
-
-# dominservice/laravel-media-kit
-
-**Lekki, modularny i wydajny system zarządzania multimediami dla Laravel 9–12**  
-(shared hosting ready – działa bez kolejek i z minimalnymi zależnościami)
+**A modern, modular, shared-hosting–friendly media management toolkit for Laravel 9–12.**  
+Process, convert, and deliver images & videos (AVIF, WebP, JPEG, MP4, Cloudflare) with lazy/eager generation, responsive variants, and domain‑level `Kinds`.
 
 ---
 
-## 🚀 Funkcje
+## 🚀 Features
 
-- 🔄 Automatyczna konwersja obrazów do **AVIF / WebP / JPEG / PNG**
-- 🧩 Warianty i rozdzielczości (`thumb`, `sm`, `md`, `lg`, `xl`, `@2x`)
-- 🖼️ Gotowe komponenty Blade: `<x-media-picture>` i `<x-media-responsive>`
-- ⚙️ Tryb **eager** (generacja przy uploadzie) lub **lazy** (pierwsze żądanie)
-- ☁️ Wsparcie dla **CDN / CloudFront** z podpisywaniem URL-i
-- 🎬 Obsługa **wideo lokalnych** oraz **Cloudflare Stream**
-- 🧰 Zintegrowane komendy CLI (`media:diagnose`, `media:cleanup`, `media:regenerate`)
-- 💾 Bezpieczne UUID i polimorficzne relacje (`HasMedia`)
-- 🧠 Zero zależności od zewnętrznych procesów – pełna zgodność z hostingiem współdzielonym
+- ✅ Supports **Laravel 9–12**, PHP ≥ 8.1
+- 📷 Convert images to **AVIF / WebP / JPEG / PNG**
+- 🧩 Configurable **variants** (thumb, sm, md, lg, xl, 2x)
+- 🌐 **Kinds layer** – domain‑specific image sets (avatar, gallery, video poster…)
+- 🧠 Smart deduplication (hash‑based)
+- ⚙️ Lazy / eager variant generation
+- 🪶 Strip EXIF/IPTC metadata and generate progressive JPEGs
+- 🪄 Built‑in filters (`grayscale`, `blur`, `watermark`)
+- 🎬 **Video support** – *basic* (local renditions) and *remote* (Cloudflare / Bunny / Cloudinary)
+- ☁️ **CDN support** with CloudFront signed URLs
+- 🧰 **MediaUploader** API with replace/keep/delete policies
+- 🔄 CLI tools for regeneration, cleanup, diagnostics
+- 🧪 Fully tested (Orchestra Testbench)
+- 🤝 Open for contributions — [Buy me a coffee ☕](https://ko-fi.com/dominservice)
 
 ---
 
-## ⚙️ Instalacja
+## 📦 Installation
 
 ```bash
 composer require dominservice/laravel-media-kit
-php artisan vendor:publish --provider="Dominservice\\MediaKit\\MediaKitServiceProvider" --tag=mediakit-config
+php artisan vendor:publish --provider="Dominservice\MediaKit\MediaKitServiceProvider" --tag=mediakit-config
 php artisan migrate
 ```
- 📌 Wymagania: PHP ≥ 8.1, Laravel 9–12, GD lub Imagick (opcjonalnie rosell-dk/webp-convert jako fallback).
 
-___
+> Works out of the box on shared hosting – no queue or external binaries required.  
+> Optional: `ext-gd`, `ext-imagick`, or `rosell-dk/webp-convert` for WebP fallback.
 
-## 🧩 Użycie
-### 1️⃣ Dodaj trait do swojego modelu
+---
+
+## ⚙️ Configuration
+
+### Variants and Formats
+
 ```php
-$asset = $post->addMedia($request->file('image'), 'featured');
-```
-### 3️⃣ Wyświetl w widoku
-__Obrazek podstawowy:__
-```bladehtml
-<x-media-picture :asset="$post->getFirstMedia('featured')" alt="Miniatura wpisu" class="rounded shadow" />
-```
-__Obrazek responsywny:__
-```bladehtml
-<x-media-responsive 
-    :asset="$post->getFirstMedia('featured')" 
-    :variants="['sm','md','lg','xl']" 
-    sizes="(min-width: 1200px) 1200px, (min-width: 768px) 768px, 100vw"
-    class="w-full rounded"
-/>
-```
-__Wideo:__
-```bladehtml
-<x-media-video src="{{ Storage::url('videos/promo.mp4') }}" title="Prezentacja" />
-```
-__Cloudflare Stream:__
-```bladehtml
-<x-media-video uid="c5ffabcdf1b2b3x9y" title="Spot reklamowy" />
-```
-___
-
-## 🌐 Trasy
-```bash
-GET /media/{asset-uuid}/{variant}/{filename?}
-```
-Przykład:
-`/media/abc12345-md/test.webp`
-
-* W trybie eager zwraca gotowy wariant.
-* W trybie lazy wygeneruje brakujący wariant przy pierwszym wywołaniu.
-
-___
-
-## ⚡ Komendy Artisan
-| Komenda                                                             | Opis                                          |
-|---------------------------------------------------------------------|-----------------------------------------------|
-| `php artisan media:diagnose`                                          | Sprawdza środowisko (GD, Imagick, WebP, AVIF) |
-| `php artisan media:regenerate`| Regeneruje wszystkie warianty                 |
-| `php artisan media:regenerate --only-missing`| Tylko brakujące warianty                      |
-| `php artisan media:cleanup`| Usuwa osierocone pliki wariantów              |
-| `php artisan media:cleanup --dry-run`| Pokazuje, co byłoby usunięte                  |
-
-___
-
-## ⚙️ Konfiguracja (`config/media-kit.php`)
-Najważniejsze klucze:
-```php
-'disk' => 'public',                 // lub 's3'
-'mode' => 'eager',                  // eager | lazy
 'formats_priority' => ['avif','webp','jpeg','png'],
-
 'variants' => [
-    'thumb' => ['fit' => [320,320]],
-    'sm'    => ['width' => 480],
-    'md'    => ['width' => 768],
-    'lg'    => ['width' => 1200],
-    'xl'    => ['width' => 1600],
+  'thumb' => ['fit' => [320,320]],
+  'sm'    => ['width' => 480],
+  'md'    => ['width' => 768],
+  'lg'    => ['width' => 1200],
+  'xl'    => ['width' => 1600],
 ],
-
-'responsive' => [
-    'order' => ['sm','md','lg','xl'],
-    'widths' => [
-        'sm' => 480,
-        'md' => 768,
-        'lg' => 1200,
-        'xl' => 1600,
-    ],
-    'default_sizes' => '(min-width: 1200px) 1200px, (min-width: 768px) 768px, 100vw',
+'enabled_formats_per_variant' => [
+  'thumb' => ['avif','webp','jpeg'],
+  '*'     => ['avif','webp','jpeg','png'],
 ],
 ```
-___
 
-## ☁️ CDN i CloudFront
-Plik `.env`:
-```dotenv
-MEDIA_KIT_CDN=https://cdn.example.com
-MEDIA_KIT_CDN_SIGNER=cloudfront
-CLOUDFRONT_KEY_PAIR_ID=APKA123EXAMPLE
-CLOUDFRONT_PRIVATE_KEY_PATH=/path/to/private_key.pem
-CLOUDFRONT_URL_EXPIRES=3600
-```
-Każdy link do wariantu zostanie podpisany przez `CloudFrontSigner`.
+### Kinds (Domain‑level definitions)
 
-___
-
-## 🎬 Wideo (lokalne / Cloudflare Stream)
-__Tryb `basic` (lokalne MP4)__
-```bladehtml
-<x-media-video src="{{ Storage::url('videos/demo.mp4') }}" title="Demo" />
-```
-__Tryb `remote` (Cloudflare Stream)__
-```dotenv
-MEDIA_KIT_VIDEO_MODE=remote
-MEDIA_KIT_VIDEO_DRIVER=cloudflare
-CF_STREAM_ACCOUNT_ID=your_account_id
-```
-```bladehtml
-<x-media-video uid="your-cloudflare-video-uid" title="Prezentacja produktu" />
-```
-___
-
-## 🧪 Diagnostyka
-```bash
-php artisan media:diagnose
-```
-Przykładowy wynik:
-```yaml
-gd              : OK
-imagick         : NIE
-imagewebp()     : OK
-imageavif()     : NIE
-webp-convert    : OK
-
-disk: public
-mode: eager
-formats_priority: avif,webp,jpeg,png
-variants: thumb,sm,md,lg,xl
-```
-___
-
-## 🧰 Przykład integracji w CMS
 ```php
-// W kontrolerze
-$post = Post::find(1);
-$post->addMedia($request->file('image'), 'gallery');
-
-// W widoku
-@foreach($post->getMedia('gallery') as $image)
-    <x-media-picture :asset="$image" variant="md" class="rounded-md" />
-@endforeach
+'kinds' => [
+  'avatar' => [
+    'collection' => 'avatar',
+    'disk'       => env('MEDIA_KIT_DISK_AVATAR', 'public'),
+    'display'    => 'lg',
+    'variants'   => ['thumb','sm','md','lg'],
+    'aliases'    => ['photo','featured'],
+  ],
+  'gallery' => [
+    'collection' => 'gallery',
+    'display'    => 'md',
+    'variants'   => ['sm','md','lg','xl'],
+  ],
+  'video_avatar' => [
+    'collection' => 'video',
+    'renditions' => ['hd','sd','mobile'],
+    'poster_kind'=> 'video_poster',
+  ],
+  'video_poster' => [
+    'collection' => 'video_poster',
+    'display'    => 'lg',
+  ],
+],
 ```
-___
 
-## 📦 Pakiet w skrócie
+### CDN Support
 
-| Element                                               | Opis                |
-| ----------------------------------------------------- | ------------------- |
-| `HasMedia`                                            | trait dla modeli    |
-| `ImageEngine`                                         | generacja wariantów |
-| `MediaAsset` / `MediaVariant`                         | modele Eloquent     |
-| `MediaController`                                     | serwowanie plików   |
-| `media:cleanup`, `media:regenerate`, `media:diagnose` | CLI                 |
-| `UrlGenerator`, `CloudFrontSigner`                    | obsługa CDN         |
+```php
+'cdn' => [
+  'base_url' => env('MEDIA_KIT_CDN', ''),
+  'signer'   => env('MEDIA_KIT_CDN_SIGNER', 'none'),  // none|cloudfront
+  'cloudfront' => [
+    'key_pair_id'      => env('CLOUDFRONT_KEY_PAIR_ID'),
+    'private_key_path' => env('CLOUDFRONT_PRIVATE_KEY_PATH'),
+    'expires'          => env('CLOUDFRONT_URL_EXPIRES', 3600),
+  ],
+],
+```
 
-___
+### Video Configuration
 
-## 📄 Licencja
+```php
+'video' => [
+  'mode' => env('MEDIA_KIT_VIDEO_MODE', 'basic'), // basic|remote
+  'remote' => [
+    'driver' => env('MEDIA_KIT_VIDEO_DRIVER', 'cloudflare'),
+    'cloudflare' => [
+      'account_id' => env('CF_STREAM_ACCOUNT_ID'),
+      'embed_type' => 'iframe', // iframe|videojs
+    ],
+  ],
+  'basic_renditions' => ['hd','sd','mobile'],
+  'poster' => ['variant' => 'md'],
+],
+```
 
-MIT © Dominservice
+---
 
-Autor: Mateusz Domin
+## 🧩 Usage
 
-Repozytorium: github.com/dominservice/laravel-media-kit
+### In Models
+
+```php
+use Dominservice\MediaKit\Traits\HasMedia;
+use Dominservice\MediaKit\Traits\HasMediaKinds;
+
+class Post extends Model
+{
+    use HasMedia, HasMediaKinds;
+}
+```
+
+### Uploading Files
+
+```php
+// simple upload
+$post->addMedia($request->file('cover'), 'featured');
+
+// domain-specific upload (via MediaUploader)
+use Dominservice\MediaKit\Services\MediaUploader;
+
+MediaUploader::uploadImage($post, 'avatar', $request->file('avatar'), 'replace', ['grayscale']);
+```
+
+### Accessing Media
+
+```php
+$asset = $post->getFirstMedia('featured');
+$url   = route('mediakit.media.show', [$asset->id, 'lg']);
+```
+
+Or via Kind helpers:
+
+```php
+$post->avatarUrl();           // default display
+$post->avatarUrl('md');       // specific variant
+$post->videoUrl('sd');        // basic video rendition
+$post->videoPosterUrl('lg');  // poster for video kind
+```
+
+---
+
+## 🎨 Blade Components
+
+### Image Components
+
+```bladehtml
+<x-media-picture :asset="$post->getFirstMedia('featured')" alt="Preview" />
+<x-media-responsive :asset="$post->getFirstMedia('featured')" :variants="['sm','md','lg']" />
+```
+
+### Kind-based Image Components
+
+```bladehtml
+<x-media-kind-picture :model="$post" kind="avatar" alt="Author" class="rounded-full" />
+<x-media-kind-picture :model="$post" kind="gallery" variant="lg" class="w-full" />
+```
+
+### Video Components
+
+#### Basic (local renditions)
+
+```bladehtml
+<x-media-kind-video :model="$post" kind="video_avatar" rendition="hd" title="Trailer" />
+```
+
+#### Remote (e.g. Cloudflare Stream)
+
+```bladehtml
+<x-media-kind-video :model="$post" kind="video_avatar" title="Promo Video" />
+```
+
+---
+
+## 🪄 Filters
+
+You can apply transformations on upload:
+
+```php
+MediaUploader::uploadImage($post, 'avatar', $request->file('avatar'), 'replace', ['grayscale']);
+MediaUploader::uploadImage($post, 'avatar', $request->file('avatar'), 'replace', [['blur' => 2]]);
+MediaUploader::uploadImage($post, 'avatar', $request->file('avatar'), 'replace', [['watermark' => ['path'=>'logo.png']]]);
+```
+
+Each filter is configurable and can be extended by registering new filter handlers.
+
+---
+
+## ⚙️ Lazy vs Eager Mode
+
+- **Eager:** Variants are generated immediately upon upload (default).  
+- **Lazy:** Variants are generated on first access via the `/media/{id}/{variant}` route.
+
+Set in `.env`:
+
+```
+MEDIA_KIT_MODE=eager
+```
+
+---
+
+## 🧠 Architecture Overview
+
+```
+┌────────────────────────────┐
+│ MediaAsset (Eloquent)      │
+│   ↳ hasMany → MediaVariant │
+│   ↳ belongsTo Morph Model  │
+└────────────────────────────┘
+          │
+          ▼
+┌────────────────────────────┐
+│ ImageEngine                │
+│  - Resize / convert        │
+│  - Fallback (WebPConvert)  │
+│  - Metadata stripping      │
+└────────────────────────────┘
+          │
+          ▼
+┌────────────────────────────┐
+│ MediaUploader              │
+│  - Policies (replace...)   │
+│  - Filters pipeline        │
+└────────────────────────────┘
+          │
+          ▼
+┌────────────────────────────┐
+│ Blade Components            │
+│  - x-media-picture          │
+│  - x-media-kind-picture     │
+│  - x-media-kind-video       │
+└────────────────────────────┘
+```
+
+---
+
+## 🧰 CLI Commands
+
+```bash
+php artisan media:diagnose           # Check GD/Imagick/WebP/AVIF availability
+php artisan media:regenerate         # Regenerate all variants
+php artisan media:regenerate --only-missing
+php artisan media:cleanup            # Remove orphaned variants
+php artisan media:cleanup --dry-run
+```
+
+---
+
+## 🧪 Testing
+
+```bash
+composer install
+composer test
+# or
+vendor/bin/phpunit
+```
+
+The test suite uses Orchestra Testbench.  
+AVIF/WebP are mocked unless available natively.
+
+---
+
+## 🛠️ Extending
+
+You can extend the package by publishing config and adding custom filters, variant rules, or Kind definitions.
+
+```bash
+php artisan vendor:publish --provider="Dominservice\MediaKit\MediaKitServiceProvider" --tag=mediakit-config
+```
+
+---
+
+## 🤝 Contributing
+
+Pull requests are welcome!  
+If you want to improve the package, feel free to fork and submit PRs.  
+Please ensure all tests pass (`composer test`).
+
+---
+
+## ☕ Support
+
+If this package helps you, consider supporting future development:  
+👉 [Buy me a coffee on Ko‑fi](https://ko-fi.com/dominservice)
+
+---
+
+## 📄 License
+
+Licensed under the MIT License.  
+© Dominservice, 2025
