@@ -162,4 +162,41 @@ return [
             'aliases'    => ['video_cover'],
         ],
     ],
+
+    // Optional model overrides for reusable package integrations.
+    'models' => [
+        'library' => \Dominservice\MediaKit\Models\MediaLibrary::class,
+        'asset' => \Dominservice\MediaKit\Models\MediaAsset::class,
+        'variant' => \Dominservice\MediaKit\Models\MediaVariant::class,
+    ],
+
+    // Configurable admin media library. The host application can override routes,
+    // middleware, permissions, layout integration, view files and accepted asset types.
+    'admin' => [
+        'enabled' => true,
+        'prefix' => 'admin/media',
+        'route_name_prefix' => 'admin.media.',
+        'middleware' => ['web', 'auth'],
+        'permissions' => [
+            'view' => null,
+            'upload' => null,
+            'delete' => null,
+        ],
+        'layout' => [
+            'mode' => 'package',
+            'view' => 'mediakit::layouts.bootstrap',
+            'section' => 'content',
+            'component' => 'admin-layout',
+        ],
+        'library' => [
+            'model' => \Dominservice\MediaKit\Models\MediaLibrary::class,
+            'view' => 'mediakit::admin.library.index',
+            'per_page' => 18,
+            'default_key' => 'global',
+            'default_name' => 'Main media library',
+            'default_collection' => 'library',
+            'allowed_extensions' => ['jpg', 'jpeg', 'png', 'webp', 'avif', 'mp4', 'webm', 'mov'],
+            'accept' => 'image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm,video/quicktime',
+        ],
+    ],
 ];

@@ -4,6 +4,7 @@ namespace Dominservice\MediaKit\Traits;
 
 use Dominservice\MediaKit\Models\MediaAsset;
 use Dominservice\MediaKit\Services\ImageEngine;
+use Dominservice\MediaKit\Services\MediaAssetCloner;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\File;
 use Illuminate\Http\UploadedFile;
@@ -30,7 +31,6 @@ trait HasMedia
     {
         $disk = (string) config('media-kit.disk', 'public');
 
-        // 1) Zapis oryginału
         if ($file instanceof UploadedFile) {
             $storedPath = $file->store('media/originals/' . date('Y/m'), $disk);
             $mime = $file->getClientMimeType();
@@ -39,27 +39,23 @@ trait HasMedia
             $storedPath = Storage::disk($disk)->putFile('media/originals/' . date('Y/m'), $file);
             $mime = $file->getMimeType() ?: Storage::disk($disk)->mimeType($storedPath);
             $ext  = pathinfo($storedPath, PATHINFO_EXTENSION);
-        } else { // ścieżka string do istniejącego pliku na dysku aplikacji
-            // Jeśli ścieżka jest absolutna – skopiuj na dysk docelowy
+        } else {
             if (is_file($file)) {
                 $basename = basename($file);
                 $target = 'media/originals/' . date('Y/m') . '/' . $basename;
                 Storage::disk($disk)->put($target, file_get_contents($file));
                 $storedPath = $target;
             } else {
-                // traktuj jako ścieżkę wewnątrz dysku
                 $storedPath = (string) $file;
             }
             $mime = Storage::disk($disk)->mimeType($storedPath);
             $ext  = pathinfo($storedPath, PATHINFO_EXTENSION);
         }
 
-        // 2) Metadane oryginału
         $size = Storage::disk($disk)->size($storedPath);
         [$w, $h] = ImageEngine::dimensions($disk, $storedPath);
         $hash = sha1((string) Storage::disk($disk)->get($storedPath));
 
-        // 3) Utwórz rekord MediaAsset
         /** @var MediaAsset $asset */
         $asset = $this->media()->create([
             'uuid'           => (string) Str::uuid(),
@@ -75,7 +71,6 @@ trait HasMedia
             'meta'           => null,
         ]);
 
-        // 4) Eager generation?
         if (config('media-kit.mode') === 'eager') {
             ImageEngine::generateAllVariants($asset);
         }
@@ -85,7 +80,6 @@ trait HasMedia
 
     /**
      * Dodaj plik z URL (pobieranie do tymczasówki, potem zapis jak UploadedFile).
-     * Uwaga: bez zewnętrznych żądań w środowiskach zabronionych – tu prosta implementacja file_get_contents.
      */
     public function addMediaFromUrl(string $url, string $collection = 'default'): MediaAsset
     {
@@ -97,7 +91,6 @@ trait HasMedia
         $tmp = tempnam(sys_get_temp_dir(), 'mediakit_');
         file_put_contents($tmp, $contents);
 
-        // Spróbuj wywnioskować rozszerzenie z URL
         $ext = pathinfo(parse_url($url, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION) ?: 'bin';
         $tmpTarget = $tmp . '.' . $ext;
         @rename($tmp, $tmpTarget);
@@ -141,5 +134,13 @@ trait HasMedia
         return (int) $this->media()
             ->where('collection', $collection)
             ->delete();
+    }
+
+    /**
+     * Attach an existing asset from the media library to this model and collection.
+     */
+    public function attachExistingMedia(MediaAsset|string $asset, string $collection = 'default', string $policy = 'replace', array $meta = []): MediaAsset
+    {
+        return app(MediaAssetCloner::class)->cloneToModel($asset, $this, $collection, $policy, $meta);
     }
 }

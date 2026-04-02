@@ -1,129 +1,43 @@
 # Dominservice Laravel Media Kit
+
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/dominservice/laravel-media-kit.svg?style=flat-square)](https://packagist.org/packages/dominservice/laravel-media-kit)
 [![Total Downloads](https://img.shields.io/packagist/dt/dominservice/laravel-media-kit.svg?style=flat-square)](https://packagist.org/packages/dominservice/laravel-media-kit)
 [![License](https://img.shields.io/packagist/l/dominservice/laravel-media-kit.svg?style=flat-square)](https://packagist.org/packages/dominservice/laravel-media-kit)
 
+`dominservice/laravel-media-kit` is a reusable media layer for Laravel applications that need image and video processing, responsive variants and a shared admin media library.
 
-**A modern, modular, shared-hosting–friendly media management toolkit for Laravel 9–13.**  
-Process, convert, and deliver images & videos (AVIF, WebP, JPEG, MP4, Cloudflare) with lazy/eager generation, responsive variants, and domain‑level `Kinds`.
+It is designed to work well in two modes at once:
+- as a clean standalone media toolkit,
+- as the media backbone for `dominservice/laravel-cms` and larger modular systems.
 
----
+## Key Features
 
-## 🚀 Features
+- Laravel 9–13 support,
+- responsive image variants in AVIF, WebP, JPEG and PNG,
+- lazy or eager variant generation,
+- media kinds for domain-specific collections,
+- shared media library for admin panels,
+- attach existing assets without re-uploading the same file,
+- image and video support,
+- configurable admin routes, middleware, permissions and layout integration,
+- publishable package views for host-project theming,
+- CDN and signed URL support.
 
-- ✅ Supports **Laravel 9–13**, PHP ≥ 8.1
-- 📷 Convert images to **AVIF / WebP / JPEG / PNG**
-- 🧩 Configurable **variants** (thumb, sm, md, lg, xl, 2x)
-- 🌐 **Kinds layer** – domain‑specific image sets (avatar, gallery, video poster…)
-- 🧠 Smart deduplication (hash‑based)
-- ⚙️ Lazy / eager variant generation
-- 🪶 Strip EXIF/IPTC metadata and generate progressive JPEGs
-- 🪄 Built‑in filters (`grayscale`, `blur`, `watermark`)
-- 🎬 **Video support** – *basic* (local renditions) and *remote* (Cloudflare / Bunny / Cloudinary)
-- ☁️ **CDN support** with CloudFront signed URLs
-- 🧰 **MediaUploader** API with replace/keep/delete policies
-- 🔄 CLI tools for regeneration, cleanup, diagnostics
-- 🧪 Fully tested (Orchestra Testbench)
-- 🤝 Open for contributions — [Buy me a coffee ☕](https://ko-fi.com/dominservice)
-
----
-
-## 📦 Installation
+## Installation
 
 ```bash
 composer require dominservice/laravel-media-kit
+
 php artisan vendor:publish --provider="Dominservice\MediaKit\MediaKitServiceProvider" --tag=mediakit-config
+php artisan vendor:publish --provider="Dominservice\MediaKit\MediaKitServiceProvider" --tag=mediakit-migrations
+php artisan vendor:publish --provider="Dominservice\MediaKit\MediaKitServiceProvider" --tag=mediakit-views
+
 php artisan migrate
 ```
 
-> Works out of the box on shared hosting – no queue or external binaries required.  
-> Optional: `ext-gd`, `ext-imagick`, or `rosell-dk/webp-convert` for WebP fallback.
+## Core Usage
 
----
-
-## ⚙️ Configuration
-
-### Variants and Formats
-
-```php
-'formats_priority' => ['avif','webp','jpeg','png'],
-'variants' => [
-  'thumb' => ['fit' => [320,320]],
-  'sm'    => ['width' => 480],
-  'md'    => ['width' => 768],
-  'lg'    => ['width' => 1200],
-  'xl'    => ['width' => 1600],
-],
-'enabled_formats_per_variant' => [
-  'thumb' => ['avif','webp','jpeg'],
-  '*'     => ['avif','webp','jpeg','png'],
-],
-```
-
-### Kinds (Domain‑level definitions)
-
-```php
-'kinds' => [
-  'avatar' => [
-    'collection' => 'avatar',
-    'disk'       => env('MEDIA_KIT_DISK_AVATAR', 'public'),
-    'display'    => 'lg',
-    'variants'   => ['thumb','sm','md','lg'],
-    'aliases'    => ['photo','featured'],
-  ],
-  'gallery' => [
-    'collection' => 'gallery',
-    'display'    => 'md',
-    'variants'   => ['sm','md','lg','xl'],
-  ],
-  'video_avatar' => [
-    'collection' => 'video',
-    'renditions' => ['hd','sd','mobile'],
-    'poster_kind'=> 'video_poster',
-  ],
-  'video_poster' => [
-    'collection' => 'video_poster',
-    'display'    => 'lg',
-  ],
-],
-```
-
-### CDN Support
-
-```php
-'cdn' => [
-  'base_url' => env('MEDIA_KIT_CDN', ''),
-  'signer'   => env('MEDIA_KIT_CDN_SIGNER', 'none'),  // none|cloudfront
-  'cloudfront' => [
-    'key_pair_id'      => env('CLOUDFRONT_KEY_PAIR_ID'),
-    'private_key_path' => env('CLOUDFRONT_PRIVATE_KEY_PATH'),
-    'expires'          => env('CLOUDFRONT_URL_EXPIRES', 3600),
-  ],
-],
-```
-
-### Video Configuration
-
-```php
-'video' => [
-  'mode' => env('MEDIA_KIT_VIDEO_MODE', 'basic'), // basic|remote
-  'remote' => [
-    'driver' => env('MEDIA_KIT_VIDEO_DRIVER', 'cloudflare'),
-    'cloudflare' => [
-      'account_id' => env('CF_STREAM_ACCOUNT_ID'),
-      'embed_type' => 'iframe', // iframe|videojs
-    ],
-  ],
-  'basic_renditions' => ['hd','sd','mobile'],
-  'poster' => ['variant' => 'md'],
-],
-```
-
----
-
-## 🧩 Usage
-
-### In Models
+### Add media to a model
 
 ```php
 use Dominservice\MediaKit\Traits\HasMedia;
@@ -131,186 +45,127 @@ use Dominservice\MediaKit\Traits\HasMediaKinds;
 
 class Post extends Model
 {
-    use HasMedia, HasMediaKinds;
+    use HasMedia;
+    use HasMediaKinds;
 }
 ```
 
-### Uploading Files
-
 ```php
-// simple upload
 $post->addMedia($request->file('cover'), 'featured');
-
-// domain-specific upload (via MediaUploader)
-use Dominservice\MediaKit\Services\MediaUploader;
-
-MediaUploader::uploadImage($post, 'avatar', $request->file('avatar'), 'replace', ['grayscale']);
 ```
 
-### Accessing Media
+### Reuse an existing asset
 
 ```php
-$asset = $post->getFirstMedia('featured');
-$url   = route('mediakit.media.show', [$asset->uuid, 'lg']);
+$post->attachExistingMedia($mediaAsset, 'featured');
+$post->attachExistingMedia($uuid, 'gallery', 'keep');
 ```
 
-Or via Kind helpers:
+This is useful for shared media libraries, CMS block builders and projects where the same asset may be used in many places.
+
+## Shared Admin Media Library
+
+The package now includes an optional admin media library module.
+
+It provides:
+- reusable routes and controllers inside the package,
+- upload, list and delete actions,
+- a dedicated `media_libraries` table,
+- publishable views,
+- flexible route, permission and layout integration.
+
+### Admin configuration
 
 ```php
-$post->avatarUrl();           // default display
-$post->avatarUrl('md');       // specific variant
-$post->videoUrl('sd');        // basic video rendition
-$post->videoPosterUrl('lg');  // poster for video kind
+'admin' => [
+    'enabled' => true,
+    'prefix' => 'admin/media',
+    'route_name_prefix' => 'admin.media.',
+    'middleware' => ['web', 'auth'],
+    'permissions' => [
+        'view' => 'media.view',
+        'upload' => 'media.upload',
+        'delete' => 'media.delete',
+    ],
+    'layout' => [
+        'mode' => 'extends',
+        'view' => 'layouts.admin',
+        'section' => 'content',
+        'component' => 'admin-layout',
+    ],
+    'library' => [
+        'view' => 'mediakit::admin.library.index',
+        'default_key' => 'global',
+        'default_name' => 'Main media library',
+        'default_collection' => 'library',
+        'per_page' => 18,
+    ],
+],
 ```
 
----
+This keeps the route and controller logic inside the package while allowing the project to override only the Blade views.
 
-## 🎨 Blade Components
+## CMS Integration
 
-### Image Components
+`dominservice/laravel-cms` can use Media Kit as its media backend.
 
-```bladehtml
-<x-media-picture :asset="$post->getFirstMedia('featured')" alt="Preview" />
-<x-media-responsive :asset="$post->getFirstMedia('featured')" :variants="['sm','md','lg']" />
-```
+Recommended setup:
+- keep media library routes and controller inside `laravel-media-kit`,
+- keep CMS content logic inside `laravel-cms`,
+- publish views from both packages,
+- override the views in the project to match the design system.
 
-### Kind-based Image Components
+This gives you a reusable package architecture and avoids duplicating media logic per project.
 
-```bladehtml
-<x-media-kind-picture :model="$post" kind="avatar" alt="Author" class="rounded-full" />
-<x-media-kind-picture :model="$post" kind="gallery" variant="lg" class="w-full" />
-```
+## Kinds and Variants
 
-### Video Components
-
-#### Basic (local renditions)
-
-```bladehtml
-<x-media-kind-video :model="$post" kind="video_avatar" rendition="hd" title="Trailer" />
-```
-
-#### Remote (e.g. Cloudflare Stream)
-
-```bladehtml
-<x-media-kind-video :model="$post" kind="video_avatar" title="Promo Video" />
-```
-
----
-
-## 🪄 Filters
-
-You can apply transformations on upload:
+Kinds let you define domain-aware media contracts such as `avatar`, `gallery`, `video_avatar` or `video_poster`.
 
 ```php
-MediaUploader::uploadImage($post, 'avatar', $request->file('avatar'), 'replace', ['grayscale']);
-MediaUploader::uploadImage($post, 'avatar', $request->file('avatar'), 'replace', [['blur' => 2]]);
-MediaUploader::uploadImage($post, 'avatar', $request->file('avatar'), 'replace', [['watermark' => ['path'=>'logo.png']]]);
+'kinds' => [
+    'avatar' => [
+        'collection' => 'avatar',
+        'display' => 'lg',
+        'variants' => ['thumb', 'sm', 'md', 'lg'],
+    ],
+    'video_avatar' => [
+        'collection' => 'video',
+        'renditions' => ['hd', 'sd', 'mobile'],
+        'poster_kind' => 'video_poster',
+    ],
+],
 ```
 
-Each filter is configurable and can be extended by registering new filter handlers.
+## Views and Theming
 
----
-
-## ⚙️ Lazy vs Eager Mode
-
-- **Eager:** Variants are generated immediately upon upload (default).  
-- **Lazy:** Variants are generated on first access via the `/media/{id}/{variant}` route.
-
-Set in `.env`:
-
-```
-MEDIA_KIT_MODE=eager
-```
-
----
-
-## 🧠 Architecture Overview
-
-```
-┌────────────────────────────┐
-│ MediaAsset (Eloquent)      │
-│   ↳ hasMany → MediaVariant │
-│   ↳ belongsTo Morph Model  │
-└────────────────────────────┘
-          │
-          ▼
-┌────────────────────────────┐
-│ ImageEngine                │
-│  - Resize / convert        │
-│  - Fallback (WebPConvert)  │
-│  - Metadata stripping      │
-└────────────────────────────┘
-          │
-          ▼
-┌────────────────────────────┐
-│ MediaUploader              │
-│  - Policies (replace...)   │
-│  - Filters pipeline        │
-└────────────────────────────┘
-          │
-          ▼
-┌────────────────────────────┐
-│ Blade Components            │
-│  - x-media-picture          │
-│  - x-media-kind-picture     │
-│  - x-media-kind-video       │
-└────────────────────────────┘
-```
-
----
-
-## 🧰 CLI Commands
+The package is prepared for reuse across projects.
 
 ```bash
-php artisan media:diagnose           # Check GD/Imagick/WebP/AVIF availability
-php artisan media:regenerate         # Regenerate all variants
-php artisan media:regenerate --only-missing
-php artisan media:cleanup            # Remove orphaned variants
-php artisan media:cleanup --dry-run
+php artisan vendor:publish --provider="Dominservice\MediaKit\MediaKitServiceProvider" --tag=mediakit-views
 ```
 
----
+Recommended approach:
+- keep routes, controller actions, models and services in the package,
+- publish the views,
+- override only the UI layer in the host project.
 
-## 🧪 Testing
+This is especially useful when pairing Media Kit with a custom CMS or admin template such as Metronic.
 
-```bash
-composer install
-composer test
-# or
-vendor/bin/phpunit
-```
+## Extensibility
 
-The test suite uses Orchestra Testbench.  
-AVIF/WebP are mocked unless available natively.
+The package is intentionally configurable instead of hardcoded.
 
----
+You can override:
+- models,
+- route prefix and route names,
+- admin middleware and permissions,
+- layout mode and view integration,
+- accepted file extensions,
+- kinds and variants,
+- published views.
 
-## 🛠️ Extending
+This allows each project to adapt the package without forking the package logic.
 
-You can extend the package by publishing config and adding custom filters, variant rules, or Kind definitions.
+## License
 
-```bash
-php artisan vendor:publish --provider="Dominservice\MediaKit\MediaKitServiceProvider" --tag=mediakit-config
-```
-
----
-
-## 🤝 Contributing
-
-Pull requests are welcome!  
-If you want to improve the package, feel free to fork and submit PRs.  
-Please ensure all tests pass (`composer test`).
-
----
-
-## ☕ Support
-
-If this package helps you, consider supporting future development:  
-👉 [Buy me a coffee on Ko‑fi](https://ko-fi.com/dominservice)
-
----
-
-## 📄 License
-
-Licensed under the MIT License.  
-© Dominservice, 2025
+MIT
