@@ -2,7 +2,7 @@
 
 namespace Dominservice\MediaKit\Models;
 
-use Dominservice\LaravelCms\Traits\HasUuidPrimary;
+use Dominservice\MediaKit\Traits\HasUuidPrimary;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;

@@ -4,14 +4,14 @@
 [![License](https://img.shields.io/packagist/l/dominservice/laravel-media-kit.svg?style=flat-square)](https://packagist.org/packages/dominservice/laravel-media-kit)
 
 
-**A modern, modular, shared-hosting–friendly media management toolkit for Laravel 9–12.**  
+**A modern, modular, shared-hosting–friendly media management toolkit for Laravel 9–13.**  
 Process, convert, and deliver images & videos (AVIF, WebP, JPEG, MP4, Cloudflare) with lazy/eager generation, responsive variants, and domain‑level `Kinds`.
 
 ---
 
 ## 🚀 Features
 
-- ✅ Supports **Laravel 9–12**, PHP ≥ 8.1
+- ✅ Supports **Laravel 9–13**, PHP ≥ 8.1
 - 📷 Convert images to **AVIF / WebP / JPEG / PNG**
 - 🧩 Configurable **variants** (thumb, sm, md, lg, xl, 2x)
 - 🌐 **Kinds layer** – domain‑specific image sets (avatar, gallery, video poster…)

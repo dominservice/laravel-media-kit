@@ -62,7 +62,7 @@ trait HasMedia
         // 3) Utwórz rekord MediaAsset
         /** @var MediaAsset $asset */
         $asset = $this->media()->create([
-            'id'             => (string) Str::uuid(),
+            'uuid'           => (string) Str::uuid(),
             'collection'     => $collection,
             'disk'           => $disk,
             'original_path'  => $storedPath,

@@ -1,6 +1,6 @@
 <?php
 
-namespace Dominservice\LaravelCms\Traits;
+namespace Dominservice\MediaKit\Traits;
 
 trait HasUuidPrimary
 {

@@ -43,7 +43,7 @@ class MediaUploader
 
         /** @var MediaAsset $asset */
         $asset = $model->media()->create([
-            'id'             => (string) Str::uuid(),
+            'uuid'           => (string) Str::uuid(),
             'collection'     => $collection,
             'disk'           => $disk,
             'original_path'  => $path,
@@ -90,7 +90,7 @@ class MediaUploader
         $asset = $model->media()->where('collection', $collection)->latest()->first();
         if (!$asset) {
             $asset = $model->media()->create([
-                'id'             => (string) Str::uuid(),
+                'uuid'           => (string) Str::uuid(),
                 'collection'     => $collection,
                 'disk'           => $disk,
                 'original_path'  => 'video-placeholder/'.date('Y/m').'/'.$model->getKey().'/placeholder.txt',
