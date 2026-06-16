@@ -6,6 +6,7 @@ use Dominservice\MediaKit\Models\MediaAsset;
 use Dominservice\MediaKit\Services\ImageEngine;
 use Dominservice\MediaKit\Support\Kinds\KindRegistry;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\File;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -15,13 +16,13 @@ class MediaUploader
     /**
      * Upload obrazu do wskazanego kind, z polityką replace/keep/delete i filtrami.
      *
-     * @param  Model        $model
-     * @param  string       $kind
-     * @param  UploadedFile $file
-     * @param  string       $policy   replace|keep|delete
-     * @param  array|null   $filters  np. ['grayscale'] albo [['blur'=>1]]
+     * @param  Model                   $model
+     * @param  string                  $kind
+     * @param  UploadedFile|File|string $file
+     * @param  string                  $policy   replace|keep|delete
+     * @param  array|null              $filters  np. ['grayscale'] albo [['blur'=>1]]
      */
-    public static function uploadImage(Model $model, string $kind, UploadedFile $file, string $policy = 'replace', ?array $filters = null): MediaAsset
+    public static function uploadImage(Model $model, string $kind, UploadedFile|File|string $file, string $policy = 'replace', ?array $filters = null): MediaAsset
     {
         $collection = KindRegistry::collectionFor($kind, $kind);
         $disk = KindRegistry::diskFor($kind, config('media-kit.disk'));
@@ -34,9 +35,7 @@ class MediaUploader
         }
 
         // 2) zapis oryginału
-        $path = $file->store('media/originals/'.date('Y/m'), $disk);
-        $mime = $file->getClientMimeType();
-        $ext  = $file->getClientOriginalExtension() ?: pathinfo($path, PATHINFO_EXTENSION);
+        [$path, $mime, $ext] = static::storeOriginal($file, $disk);
         $size = Storage::disk($disk)->size($path);
         [$w, $h] = ImageEngine::dimensions($disk, $path);
         $hash = sha1((string) Storage::disk($disk)->get($path));
@@ -71,6 +70,46 @@ class MediaUploader
         }
 
         return $asset;
+    }
+
+    /**
+     * @return array{0:string,1:string|null,2:string|null}
+     */
+    protected static function storeOriginal(UploadedFile|File|string $file, string $disk): array
+    {
+        if ($file instanceof UploadedFile) {
+            $path = $file->store('media/originals/'.date('Y/m'), $disk);
+            $mime = $file->getClientMimeType();
+            $ext = $file->getClientOriginalExtension() ?: pathinfo($path, PATHINFO_EXTENSION);
+
+            return [$path, $mime, $ext];
+        }
+
+        if ($file instanceof File) {
+            $path = Storage::disk($disk)->putFile('media/originals/'.date('Y/m'), $file);
+            $mime = $file->getMimeType() ?: Storage::disk($disk)->mimeType($path);
+            $ext = pathinfo($path, PATHINFO_EXTENSION);
+
+            return [$path, $mime, $ext];
+        }
+
+        if (is_file($file)) {
+            $basename = basename($file);
+            $target = 'media/originals/' . date('Y/m') . '/' . $basename;
+            Storage::disk($disk)->put($target, file_get_contents($file));
+            $mime = Storage::disk($disk)->mimeType($target);
+            $ext = pathinfo($target, PATHINFO_EXTENSION);
+
+            return [$target, $mime, $ext];
+        }
+
+        $path = (string) $file;
+
+        return [
+            $path,
+            Storage::disk($disk)->mimeType($path),
+            pathinfo($path, PATHINFO_EXTENSION),
+        ];
     }
 
     /**
