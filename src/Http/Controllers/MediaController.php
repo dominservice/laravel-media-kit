@@ -22,8 +22,10 @@ class MediaController extends Controller
         /** @var MediaAsset $assetModel */
         $assetModel = MediaAsset::query()->findOrFail($asset);
 
+        $resolvedVariant = $this->resolveVariantName($variant);
+
         // Czy taki wariant jest zdefiniowany w configu?
-        $variantRules = Config::get("media-kit.variants.{$variant}");
+        $variantRules = Config::get("media-kit.variants.{$resolvedVariant}");
         if (!$variantRules) {
             abort(404, "Variant '{$variant}' not configured");
         }
@@ -33,7 +35,7 @@ class MediaController extends Controller
 
         // 1) Spróbuj znaleźć istniejący wariant w preferowanej kolejności
         foreach ($formatOrder as $fmt) {
-            $found = $assetModel->variants()->where(['name' => $variant, 'format' => $fmt])->first();
+            $found = $assetModel->variants()->where(['name' => $resolvedVariant, 'format' => $fmt])->first();
             if ($found) {
                 return $this->streamVariant($found->disk, $found->path, $fmt);
             }
@@ -49,7 +51,7 @@ class MediaController extends Controller
             foreach ($enabled as $fmt) {
                 $generated = ImageEngine::generateVariant(
                     $assetModel,
-                    $variant,
+                    $resolvedVariant,
                     $variantRules,
                     $fmt,
                     $assetModel->disk,
@@ -63,6 +65,62 @@ class MediaController extends Controller
 
         // Brak wariantu i brak możliwości wygenerowania
         abort(404);
+    }
+
+    private function resolveVariantName(string $requestedVariant): string
+    {
+        $requestedVariant = trim($requestedVariant);
+        $configuredVariants = array_values(array_filter(array_map(
+            static fn (mixed $variant): string => trim((string) $variant),
+            array_keys((array) Config::get('media-kit.variants', []))
+        )));
+
+        if ($requestedVariant === '' || $configuredVariants === []) {
+            return $requestedVariant;
+        }
+
+        if (in_array($requestedVariant, $configuredVariants, true)) {
+            return $requestedVariant;
+        }
+
+        $requestedLower = strtolower($requestedVariant);
+
+        $previewCandidates = ['thumb', 'sm', 'desktop_thumb', 'tablet_thumb', 'mobile_thumb'];
+        $fullCandidates = ['lg', 'md', 'xl', 'desktop_full', 'tablet_full', 'mobile_full', 'desktop', 'tablet', 'mobile'];
+
+        if (in_array($requestedLower, ['thumb', 'thumbnail', 'sm'], true)) {
+            return $this->firstMatchingVariant($configuredVariants, $previewCandidates, 'thumb');
+        }
+
+        if (in_array($requestedLower, ['lg', 'md', 'xl', 'full', 'preview'], true)) {
+            return $this->firstMatchingVariant($configuredVariants, $fullCandidates, 'full', true);
+        }
+
+        return $configuredVariants[0];
+    }
+
+    /**
+     * @param array<int, string> $configuredVariants
+     * @param array<int, string> $preferredNames
+     */
+    private function firstMatchingVariant(array $configuredVariants, array $preferredNames, string $containsNeedle, bool $preferLast = false): string
+    {
+        foreach ($preferredNames as $preferredName) {
+            if (in_array($preferredName, $configuredVariants, true)) {
+                return $preferredName;
+            }
+        }
+
+        $containsMatches = array_values(array_filter(
+            $configuredVariants,
+            static fn (string $variant): bool => str_contains(strtolower($variant), strtolower($containsNeedle))
+        ));
+
+        if ($containsMatches !== []) {
+            return $preferLast ? $containsMatches[array_key_last($containsMatches)] : $containsMatches[0];
+        }
+
+        return $preferLast ? $configuredVariants[array_key_last($configuredVariants)] : $configuredVariants[0];
     }
 
     /**
