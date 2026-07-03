@@ -4,6 +4,7 @@ namespace Dominservice\MediaKit\Http\Controllers\Admin;
 
 use Dominservice\MediaKit\Models\MediaAsset;
 use Dominservice\MediaKit\Services\MediaAssetManager;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -57,7 +58,7 @@ class MediaLibraryController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $allowedExtensions = (array) config('media-kit.admin.library.allowed_extensions', ['jpg', 'jpeg', 'png', 'webp', 'avif', 'mp4', 'webm', 'mov']);
 
@@ -86,6 +87,30 @@ class MediaLibraryController extends Controller
             'path' => $asset->original_path,
             'mime' => $asset->original_mime,
         ]);
+
+        if ($request->expectsJson()) {
+            $previewRouteAvailable = \Illuminate\Support\Facades\Route::has('mediakit.media.show');
+
+            return response()->json([
+                'ok' => true,
+                'message' => 'Plik został dodany do biblioteki mediów.',
+                'asset' => [
+                    'uuid' => $asset->uuid,
+                    'collection' => $asset->collection,
+                    'original_path' => $asset->original_path,
+                    'original_mime' => $asset->original_mime,
+                    'original_ext' => $asset->original_ext,
+                    'title' => (string) data_get($asset->meta, 'title', ''),
+                    'alt' => (string) data_get($asset->meta, 'alt', ''),
+                    'preview_url' => $previewRouteAvailable && !str_starts_with((string) $asset->original_mime, 'video/')
+                        ? route('mediakit.media.show', [$asset->uuid, 'sm'])
+                        : null,
+                    'full_url' => $previewRouteAvailable
+                        ? route('mediakit.media.show', [$asset->uuid, 'lg'])
+                        : null,
+                ],
+            ]);
+        }
 
         return back()->with('status', 'Plik został dodany do biblioteki mediów.');
     }
