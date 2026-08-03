@@ -5,7 +5,7 @@
   'class' => '',
 ])
 
-@if($asset)
+@if($asset && $asset->variants()->exists())
     <picture>
         {{-- preferowane źródła nowoczesne --}}
         <source
@@ -29,4 +29,15 @@
                 @endif
         >
     </picture>
+@elseif($asset)
+    <img
+        src="{{ \Illuminate\Support\Facades\Storage::disk($asset->disk)->url($asset->original_path) }}"
+        alt="{{ $alt }}"
+        class="{{ $class }}"
+        loading="lazy"
+        decoding="async"
+        @if($asset->width && $asset->height)
+            width="{{ $asset->width }}" height="{{ $asset->height }}"
+        @endif
+    >
 @endif

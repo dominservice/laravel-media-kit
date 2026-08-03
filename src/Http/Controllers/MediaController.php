@@ -63,6 +63,10 @@ class MediaController extends Controller
             }
         }
 
+        if (str_starts_with((string) $assetModel->original_mime, 'image/') && Storage::disk($assetModel->disk)->exists($assetModel->original_path)) {
+            return $this->streamOriginal($assetModel);
+        }
+
         // Brak wariantu i brak możliwości wygenerowania
         abort(404);
     }
@@ -152,5 +156,19 @@ class MediaController extends Controller
             // Przekaż surowy strumień do klienta
             fpassthru($stream);
         }, 200, $headers);
+    }
+
+    protected function streamOriginal(MediaAsset $asset): StreamedResponse
+    {
+        $stream = Storage::disk($asset->disk)->readStream($asset->original_path);
+        if (! $stream) {
+            abort(404);
+        }
+
+        return Response::stream(function () use ($stream): void {
+            fpassthru($stream);
+        }, 200, array_merge([
+            'Content-Type' => $asset->original_mime ?: 'application/octet-stream',
+        ], (array) Config::get('media-kit.cache_headers', [])));
     }
 }

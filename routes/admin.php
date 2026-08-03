@@ -27,6 +27,11 @@ Route::middleware($middleware)
             ->middleware($withPermission($permissions['upload'] ?? null))
             ->name('store');
 
+        Route::put('/{asset}', [MediaLibraryController::class, 'update'])
+            ->middleware($withPermission($permissions['upload'] ?? null))
+            ->whereUuid('asset')
+            ->name('update');
+
         Route::delete('/{asset}', [MediaLibraryController::class, 'destroy'])
             ->middleware($withPermission($permissions['delete'] ?? null))
             ->whereUuid('asset')

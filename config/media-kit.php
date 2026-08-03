@@ -139,6 +139,13 @@ return [
             'variants'   => ['thumb','sm','md','lg','xl'],
             'aliases'    => ['photo','featured'],
         ],
+        'avatar_small' => [
+            'collection' => 'avatar_small',
+            'disk'       => env('MEDIA_KIT_DISK_AVATAR', env('MEDIA_KIT_DISK', 'public')),
+            'display'    => 'md',
+            'variants'   => ['thumb','sm','md','lg'],
+            'aliases'    => ['photo_small','featured_small'],
+        ],
         'gallery' => [
             'collection' => 'gallery',
             'disk'       => env('MEDIA_KIT_DISK_GALLERY', env('MEDIA_KIT_DISK', 'public')),
@@ -160,6 +167,13 @@ return [
             'display'    => 'lg',
             'variants'   => ['thumb','sm','md','lg'],
             'aliases'    => ['video_cover'],
+        ],
+        'video_poster_small' => [
+            'collection' => 'video_poster_small',
+            'disk'       => env('MEDIA_KIT_DISK_VIDEO_POSTER', env('MEDIA_KIT_DISK', 'public')),
+            'display'    => 'md',
+            'variants'   => ['thumb','sm','md','lg'],
+            'aliases'    => ['video_cover_small'],
         ],
     ],
 
@@ -197,6 +211,8 @@ return [
             'default_collection' => 'library',
             'allowed_extensions' => ['jpg', 'jpeg', 'png', 'webp', 'avif', 'mp4', 'webm', 'mov'],
             'accept' => 'image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm,video/quicktime',
+            // Optional host resolver returning a human-readable usage label/location/link.
+            'usage_resolver' => null,
         ],
     ],
 ];

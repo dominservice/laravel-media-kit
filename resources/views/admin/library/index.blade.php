@@ -74,6 +74,7 @@
                                 @php($title = (string) data_get($asset->meta, 'title', ''))
                                 @php($alt = (string) data_get($asset->meta, 'alt', ''))
                                 @php($isVideo = str_starts_with((string) $asset->original_mime, 'video/'))
+                                @php($usages = $assetUsages[$asset->uuid] ?? [])
                                 <div class="col-sm-6 col-xxl-4">
                                     <article class="card border-0 shadow-sm h-100">
                                         <div class="card-body p-4 d-flex flex-column">
@@ -96,7 +97,45 @@
                                                 @endif
                                                 <div class="small text-muted">{{ number_format(((int) $asset->original_size) / 1024, 1) }} KB</div>
                                                 <div class="small text-muted text-break">UUID: {{ $asset->uuid }}</div>
+                                                <div>
+                                                    @if($usages !== [])
+                                                        <span class="badge badge-light-success">Używany: {{ count($usages) }}</span>
+                                                    @else
+                                                        <span class="badge badge-light-secondary">Nieprzypisany</span>
+                                                    @endif
+                                                </div>
+                                                @if($usages !== [])
+                                                    <div class="rounded-3 bg-light p-3 mt-1">
+                                                        <div class="small fw-semibold mb-2">Przypisania</div>
+                                                        <ul class="small mb-0 ps-4">
+                                                            @foreach($usages as $usage)
+                                                                <li class="mb-1">
+                                                                    @if(!empty($usage['url']))
+                                                                        <a href="{{ $usage['url'] }}" class="text-gray-800 text-hover-primary">{{ $usage['label'] }}</a>
+                                                                    @else
+                                                                        <span>{{ $usage['label'] }}</span>
+                                                                    @endif
+                                                                    @if(!empty($usage['location']))
+                                                                        <span class="text-muted"> — {{ $usage['location'] }}</span>
+                                                                    @endif
+                                                                </li>
+                                                            @endforeach
+                                                        </ul>
+                                                    </div>
+                                                @endif
                                             </div>
+
+                                            <details class="mb-4">
+                                                <summary class="btn btn-light btn-sm">Edytuj dane</summary>
+                                                <form method="post" action="{{ route($routePrefix . '.update', $asset->uuid) }}" class="d-flex flex-column gap-3 mt-3">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <input type="text" name="title" value="{{ $title }}" class="form-control form-control-sm" placeholder="Tytuł techniczny">
+                                                    <input type="text" name="alt" value="{{ $alt }}" class="form-control form-control-sm" placeholder="Tekst alternatywny">
+                                                    <input type="text" name="collection" value="{{ $asset->collection }}" class="form-control form-control-sm" required placeholder="Kolekcja">
+                                                    <button type="submit" class="btn btn-primary btn-sm">Zapisz dane</button>
+                                                </form>
+                                            </details>
 
                                             <div class="mt-auto d-flex flex-wrap gap-2">
                                                 @unless($isVideo)
@@ -105,7 +144,7 @@
                                                 <form method="post" action="{{ route($routePrefix . '.destroy', $asset->uuid) }}" onsubmit="return confirm('Delete this file from the media library?');">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-light-danger btn-sm">Delete</button>
+                                                    <button type="submit" class="btn btn-light-danger btn-sm" @disabled($usages !== []) title="{{ $usages !== [] ? 'Najpierw usuń przypisania tego pliku.' : '' }}">Delete</button>
                                                 </form>
                                             </div>
                                         </div>
