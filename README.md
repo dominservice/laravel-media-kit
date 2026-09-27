@@ -10,9 +10,16 @@ It is designed to work well in two modes at once:
 - as a clean standalone media toolkit,
 - as the media backbone for `dominservice/laravel-cms` and larger modular systems.
 
+## Requirements
+
+- PHP 8.3+
+- Laravel 13.32+
+
+The current `2.x` line targets DominPress and Laravel 13. Laravel 9–12 remain available through the previous `1.x` line.
+
 ## Key Features
 
-- Laravel 9–13 support,
+- Laravel 13 support,
 - responsive image variants in AVIF, WebP, JPEG and PNG,
 - lazy or eager variant generation,
 - media kinds for domain-specific collections,
