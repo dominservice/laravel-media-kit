@@ -33,7 +33,7 @@ class MediaKitServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'mediakit');
         $this->loadRoutesFrom(__DIR__ . '/../routes/media.php');
 
-        if (config('media-kit.admin.enabled', true)) {
+        if ((bool) config('media-kit.admin.enabled', false)) {
             $this->loadRoutesFrom(__DIR__ . '/../routes/admin.php');
         }
 

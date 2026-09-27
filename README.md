@@ -85,7 +85,7 @@ It provides:
 
 ```php
 'admin' => [
-    'enabled' => true,
+    'enabled' => filter_var(env('MEDIA_KIT_ADMIN_ENABLED', false), FILTER_VALIDATE_BOOL),
     'prefix' => 'admin/media',
     'route_name_prefix' => 'admin.media.',
     'middleware' => ['web', 'auth'],
@@ -109,6 +109,10 @@ It provides:
     ],
 ],
 ```
+
+The admin library is disabled by default. Enable it explicitly in a host project with
+`MEDIA_KIT_ADMIN_ENABLED=true`. The public media delivery route remains available,
+because CMS pages may still need to render stored assets without exposing the admin library.
 
 This keeps the route and controller logic inside the package while allowing the project to override only the Blade views.
 

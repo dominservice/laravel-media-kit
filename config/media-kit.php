@@ -187,7 +187,7 @@ return [
     // Configurable admin media library. The host application can override routes,
     // middleware, permissions, layout integration, view files and accepted asset types.
     'admin' => [
-        'enabled' => true,
+        'enabled' => filter_var(env('MEDIA_KIT_ADMIN_ENABLED', false), FILTER_VALIDATE_BOOL),
         'prefix' => 'admin/media',
         'route_name_prefix' => 'admin.media.',
         'middleware' => ['web', 'auth'],
