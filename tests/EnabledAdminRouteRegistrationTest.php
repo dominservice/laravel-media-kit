@@ -17,6 +17,12 @@ final class EnabledAdminRouteRegistrationTest extends TestCase
     {
         self::assertTrue(Route::has('admin.media.index'));
         self::assertTrue(Route::has('admin.media.store'));
+        self::assertTrue(Route::has('admin.media.browse'));
+        self::assertTrue(Route::has('admin.media.thumbnail'));
+        self::assertTrue(Route::has('admin.media.libraries.store'));
+        self::assertTrue(Route::has('admin.media.folders.store'));
+        self::assertTrue(Route::has('admin.media.bulk.move'));
+        self::assertTrue(Route::has('admin.media.bulk.destroy'));
         self::assertTrue(Route::has('mediakit.media.show'));
     }
 }

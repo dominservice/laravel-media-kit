@@ -12,29 +12,30 @@ class MediaKitServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/media-kit.php', 'media-kit');
+        $this->mergeConfigFrom(__DIR__.'/../config/media-kit.php', 'media-kit');
     }
 
     public function boot(): void
     {
         $this->publishes([
-            __DIR__ . '/../config/media-kit.php' => config_path('media-kit.php'),
+            __DIR__.'/../config/media-kit.php' => config_path('media-kit.php'),
         ], 'mediakit-config');
 
         $this->publishes([
-            __DIR__ . '/../resources/views' => resource_path('views/vendor/mediakit'),
+            __DIR__.'/../resources/views' => resource_path('views/vendor/mediakit'),
         ], 'mediakit-views');
 
         $this->publishes([
-            __DIR__ . '/../database/migrations/2025_10_16_000000_create_media_tables.php' => database_path('migrations/2025_10_16_000000_create_media_tables.php'),
-            __DIR__ . '/../database/migrations/2025_10_16_000100_create_media_libraries_table.php' => database_path('migrations/2025_10_16_000100_create_media_libraries_table.php'),
+            __DIR__.'/../database/migrations/2025_10_16_000000_create_media_tables.php' => database_path('migrations/2025_10_16_000000_create_media_tables.php'),
+            __DIR__.'/../database/migrations/2025_10_16_000100_create_media_libraries_table.php' => database_path('migrations/2025_10_16_000100_create_media_libraries_table.php'),
+            __DIR__.'/../database/migrations/2026_10_21_000200_create_media_folders_table.php' => database_path('migrations/2026_10_21_000200_create_media_folders_table.php'),
         ], 'mediakit-migrations');
 
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'mediakit');
-        $this->loadRoutesFrom(__DIR__ . '/../routes/media.php');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'mediakit');
+        $this->loadRoutesFrom(__DIR__.'/../routes/media.php');
 
         if ((bool) config('media-kit.admin.enabled', false)) {
-            $this->loadRoutesFrom(__DIR__ . '/../routes/admin.php');
+            $this->loadRoutesFrom(__DIR__.'/../routes/admin.php');
         }
 
         Blade::component('mediakit::components.media-picture', 'media-picture');

@@ -4,6 +4,7 @@ namespace Dominservice\MediaKit\Models;
 
 use Dominservice\MediaKit\Traits\HasMedia;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class MediaLibrary extends Model
@@ -40,5 +41,10 @@ class MediaLibrary extends Model
             ['key' => $key],
             ['name' => $name]
         );
+    }
+
+    public function folders(): HasMany
+    {
+        return $this->hasMany(MediaFolder::class, 'media_library_id');
     }
 }

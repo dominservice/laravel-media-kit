@@ -1,5 +1,9 @@
 <?php
 
+use Dominservice\MediaKit\Models\MediaAsset;
+use Dominservice\MediaKit\Models\MediaLibrary;
+use Dominservice\MediaKit\Models\MediaVariant;
+
 return [
 
     // Dysk domyślny (można nadpisać per-kind)
@@ -13,7 +17,7 @@ return [
         'avif' => 45,
         'webp' => 75,
         'jpeg' => 72,
-        'png'  => null,
+        'png' => null,
     ],
 
     // Usuwanie EXIF/IPTC
@@ -34,10 +38,10 @@ return [
     // Definicje wariantów (rozmiary)
     'variants' => [
         'thumb' => ['fit' => [320, 320]],
-        'sm'    => ['width' => 480],
-        'md'    => ['width' => 768],
-        'lg'    => ['width' => 1200],
-        'xl'    => ['width' => 1600],
+        'sm' => ['width' => 480],
+        'md' => ['width' => 768],
+        'lg' => ['width' => 1200],
+        'xl' => ['width' => 1600],
         'md@2x' => ['width' => 1536],
         'lg@2x' => ['width' => 2400],
     ],
@@ -45,12 +49,12 @@ return [
     // Włączone formaty dla wariantów
     'enabled_formats_per_variant' => [
         'thumb' => ['avif', 'webp', 'jpeg'],
-        '*'     => ['avif', 'webp', 'jpeg', 'png'],
+        '*' => ['avif', 'webp', 'jpeg', 'png'],
     ],
 
     // Responsywność (srcset/sizes)
     'responsive' => [
-        'order' => ['sm','md','lg','xl'],
+        'order' => ['sm', 'md', 'lg', 'xl'],
         'widths' => [
             'sm' => 480,
             'md' => 768,
@@ -100,7 +104,7 @@ return [
     // Cache aplikacyjny (opcjonalny)
     'cache_store' => [
         'store' => env('MEDIA_KIT_CACHE_STORE', null), // np. 'file', 'redis' lub null
-        'ttl'   => env('MEDIA_KIT_CACHE_TTL', 3600),   // sekundy
+        'ttl' => env('MEDIA_KIT_CACHE_TTL', 3600),   // sekundy
     ],
 
     // Presety filtrów (przykłady)
@@ -134,54 +138,54 @@ return [
     'kinds' => [
         'avatar' => [
             'collection' => 'avatar',
-            'disk'       => env('MEDIA_KIT_DISK_AVATAR', env('MEDIA_KIT_DISK', 'public')),
-            'display'    => 'lg',
-            'variants'   => ['thumb','sm','md','lg','xl'],
-            'aliases'    => ['photo','featured'],
+            'disk' => env('MEDIA_KIT_DISK_AVATAR', env('MEDIA_KIT_DISK', 'public')),
+            'display' => 'lg',
+            'variants' => ['thumb', 'sm', 'md', 'lg', 'xl'],
+            'aliases' => ['photo', 'featured'],
         ],
         'avatar_small' => [
             'collection' => 'avatar_small',
-            'disk'       => env('MEDIA_KIT_DISK_AVATAR', env('MEDIA_KIT_DISK', 'public')),
-            'display'    => 'md',
-            'variants'   => ['thumb','sm','md','lg'],
-            'aliases'    => ['photo_small','featured_small'],
+            'disk' => env('MEDIA_KIT_DISK_AVATAR', env('MEDIA_KIT_DISK', 'public')),
+            'display' => 'md',
+            'variants' => ['thumb', 'sm', 'md', 'lg'],
+            'aliases' => ['photo_small', 'featured_small'],
         ],
         'gallery' => [
             'collection' => 'gallery',
-            'disk'       => env('MEDIA_KIT_DISK_GALLERY', env('MEDIA_KIT_DISK', 'public')),
-            'display'    => 'md',
-            'variants'   => ['sm','md','lg','xl'],
-            'aliases'    => [],
+            'disk' => env('MEDIA_KIT_DISK_GALLERY', env('MEDIA_KIT_DISK', 'public')),
+            'display' => 'md',
+            'variants' => ['sm', 'md', 'lg', 'xl'],
+            'aliases' => [],
         ],
         'video_avatar' => [
             'collection' => 'video',
-            'disk'       => env('MEDIA_KIT_DISK_VIDEO', env('MEDIA_KIT_DISK', 'public')),
+            'disk' => env('MEDIA_KIT_DISK_VIDEO', env('MEDIA_KIT_DISK', 'public')),
             // renditions tylko dla trybu 'basic'
-            'renditions' => ['hd','sd','mobile'],
-            'poster_kind'=> 'video_poster',
-            'aliases'    => ['video_main'],
+            'renditions' => ['hd', 'sd', 'mobile'],
+            'poster_kind' => 'video_poster',
+            'aliases' => ['video_main'],
         ],
         'video_poster' => [
             'collection' => 'video_poster',
-            'disk'       => env('MEDIA_KIT_DISK_VIDEO_POSTER', env('MEDIA_KIT_DISK', 'public')),
-            'display'    => 'lg',
-            'variants'   => ['thumb','sm','md','lg'],
-            'aliases'    => ['video_cover'],
+            'disk' => env('MEDIA_KIT_DISK_VIDEO_POSTER', env('MEDIA_KIT_DISK', 'public')),
+            'display' => 'lg',
+            'variants' => ['thumb', 'sm', 'md', 'lg'],
+            'aliases' => ['video_cover'],
         ],
         'video_poster_small' => [
             'collection' => 'video_poster_small',
-            'disk'       => env('MEDIA_KIT_DISK_VIDEO_POSTER', env('MEDIA_KIT_DISK', 'public')),
-            'display'    => 'md',
-            'variants'   => ['thumb','sm','md','lg'],
-            'aliases'    => ['video_cover_small'],
+            'disk' => env('MEDIA_KIT_DISK_VIDEO_POSTER', env('MEDIA_KIT_DISK', 'public')),
+            'display' => 'md',
+            'variants' => ['thumb', 'sm', 'md', 'lg'],
+            'aliases' => ['video_cover_small'],
         ],
     ],
 
     // Optional model overrides for reusable package integrations.
     'models' => [
-        'library' => \Dominservice\MediaKit\Models\MediaLibrary::class,
-        'asset' => \Dominservice\MediaKit\Models\MediaAsset::class,
-        'variant' => \Dominservice\MediaKit\Models\MediaVariant::class,
+        'library' => MediaLibrary::class,
+        'asset' => MediaAsset::class,
+        'variant' => MediaVariant::class,
     ],
 
     // Configurable admin media library. The host application can override routes,
@@ -203,9 +207,13 @@ return [
             'component' => 'admin-layout',
         ],
         'library' => [
-            'model' => \Dominservice\MediaKit\Models\MediaLibrary::class,
+            'model' => MediaLibrary::class,
             'view' => 'mediakit::admin.library.index',
-            'per_page' => 18,
+            'per_page' => 24,
+            'browser_per_page' => 24,
+            'thumbnail_variant' => 'thumb',
+            'max_upload_files' => 20,
+            'max_file_size_kb' => 51200,
             'default_key' => 'global',
             'default_name' => 'Main media library',
             'default_collection' => 'library',
