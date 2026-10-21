@@ -6,6 +6,7 @@
 @php($selectedCollection = (string) ($filters['collection'] ?? ''))
 @php($activeFolder = $folders->firstWhere('key', $selectedCollection))
 @php($defaultCollection = (string) config('media-kit.admin.library.default_collection', 'library'))
+@php($folderNavigationFilters = ['q' => $filters['q'], 'type' => $filters['type'], 'sort' => $filters['sort'], 'missing_alt' => $filters['missing_alt'] ? 1 : null])
 
 @section('content')
     <div class="d-flex flex-column gap-4">
@@ -23,7 +24,7 @@
                         </div>
                         <div class="col-12 col-md-3">
                             <label for="media_filter_library" class="visually-hidden">Biblioteka</label>
-                            <select id="media_filter_library" name="library" class="form-select form-select-solid">
+                            <select id="media_filter_library" name="library" class="form-select form-select-solid" data-media-filter-library>
                                 @foreach($libraries as $item)
                                     <option value="{{ $item->getKey() }}" @selected($selectedLibrary === (string) $item->getKey())>{{ $item->name }}</option>
                                 @endforeach
@@ -87,9 +88,9 @@
                         @endif
                     </div>
 
-                    <div class="row g-3">
+                    <div class="row g-3" data-media-folder-grid>
                         @foreach($folders as $folder)
-                            <div class="col-6 col-md-4 col-xl-3">
+                            <div class="col-6 col-md-4 col-xl-3" data-media-folder-card="{{ $folder['key'] }}">
                                 <a href="{{ route($routePrefix . '.index', array_filter(['library' => $selectedLibrary, 'collection' => $folder['key'], 'q' => $filters['q'], 'type' => $filters['type'], 'sort' => $filters['sort'], 'missing_alt' => $filters['missing_alt'] ? 1 : null])) }}"
                                    class="d-flex align-items-center gap-3 rounded-3 border p-3 text-gray-800 text-hover-primary h-100 {{ $selectedCollection === $folder['key'] ? 'border-primary bg-light-primary' : 'bg-light' }}"
                                    @if($selectedCollection === $folder['key']) aria-current="page" @endif>
@@ -292,7 +293,7 @@
                                                     <label for="asset_alt_{{ $asset->uuid }}" class="visually-hidden">Tekst alternatywny</label>
                                                     <input id="asset_alt_{{ $asset->uuid }}" type="text" name="alt" value="{{ $alt }}" class="form-control form-control-sm" placeholder="Tekst alternatywny">
                                                     <label for="asset_collection_{{ $asset->uuid }}" class="visually-hidden">Folder</label>
-                                                    <select id="asset_collection_{{ $asset->uuid }}" name="collection" class="form-select form-select-sm" required>
+                                                    <select id="asset_collection_{{ $asset->uuid }}" name="collection" class="form-select form-select-sm js-media-asset-folder" required>
                                                         @foreach($folders as $folder)
                                                             <option value="{{ $folder['key'] }}" @selected($asset->collection === $folder['key'])>{{ $folder['name'] }}</option>
                                                         @endforeach
@@ -338,6 +339,9 @@
         (() => {
             const foldersByLibrary = @json($foldersByLibrary);
             const defaultCollection = @json($defaultCollection);
+            const selectedLibrary = @json($selectedLibrary);
+            const mediaIndexUrl = @json(route($routePrefix . '.index'));
+            const activeFilters = @json($folderNavigationFilters);
             const status = document.getElementById('media_dynamic_status');
 
             const setStatus = (message, isError = false) => {
@@ -379,11 +383,64 @@
             });
 
             const appendLibraryOption = (library) => {
-                document.querySelectorAll('.js-media-library').forEach((select) => {
-                    if ([...select.options].some((option) => option.value === library.id)) return;
+                document.querySelectorAll('.js-media-library, [data-media-filter-library]').forEach((select) => {
+                    if ([...select.options].some((option) => option.value === String(library.id))) return;
                     select.add(new Option(library.name, library.id));
                 });
-                foldersByLibrary[library.id] = [];
+                foldersByLibrary[library.id] ||= [];
+            };
+
+            const folderUrl = (folder) => {
+                const url = new URL(mediaIndexUrl, window.location.origin);
+                url.searchParams.set('library', folder.library_id);
+                url.searchParams.set('collection', folder.key);
+                Object.entries(activeFilters).forEach(([key, value]) => {
+                    if (value !== null && value !== '') url.searchParams.set(key, String(value));
+                });
+
+                return url.toString();
+            };
+
+            const appendFolderTile = (folder) => {
+                if (String(folder.library_id) !== selectedLibrary) return;
+
+                const grid = document.querySelector('[data-media-folder-grid]');
+                const alreadyRendered = [...(grid?.querySelectorAll('[data-media-folder-card]') || [])]
+                    .some((card) => card.dataset.mediaFolderCard === folder.key);
+                if (!grid || alreadyRendered) return;
+
+                const column = document.createElement('div');
+                column.className = 'col-6 col-md-4 col-xl-3';
+                column.dataset.mediaFolderCard = folder.key;
+
+                const link = document.createElement('a');
+                link.href = folderUrl(folder);
+                link.className = 'd-flex align-items-center gap-3 rounded-3 border p-3 text-gray-800 text-hover-primary h-100 bg-light';
+
+                const icon = document.createElement('span');
+                icon.className = 'fs-2';
+                icon.setAttribute('aria-hidden', 'true');
+                icon.textContent = '📁';
+
+                const content = document.createElement('span');
+                content.className = 'min-w-0';
+                const name = document.createElement('span');
+                name.className = 'd-block fw-semibold text-truncate';
+                name.textContent = folder.name;
+                const count = document.createElement('span');
+                count.className = 'd-block small text-muted';
+                count.textContent = `${folder.count ?? folder.assets_count ?? 0} plików`;
+
+                content.append(name, count);
+                link.append(icon, content);
+                column.append(link);
+                grid.append(column);
+
+                document.querySelectorAll('select.js-media-asset-folder').forEach((select) => {
+                    if (![...select.options].some((option) => option.value === folder.key)) {
+                        select.add(new Option(folder.name, folder.key));
+                    }
+                });
             };
 
             document.querySelectorAll('.js-media-create').forEach((form) => {
@@ -416,12 +473,22 @@
                         } else {
                             const folder = payload.folder;
                             foldersByLibrary[folder.library_id] ||= [];
-                            foldersByLibrary[folder.library_id].push(folder);
+                            const existingFolder = foldersByLibrary[folder.library_id]
+                                .find((item) => item.key === folder.key);
+                            if (!existingFolder) foldersByLibrary[folder.library_id].push(folder);
+                            const uploadLibrary = document.getElementById('mediakit_library');
+                            uploadLibrary.value = folder.library_id;
+                            updateFolderSelect(
+                                document.getElementById(uploadLibrary.dataset.folderTarget),
+                                folder.library_id,
+                                folder.key,
+                            );
                             document.querySelectorAll('.js-media-library[data-folder-target]').forEach((librarySelect) => {
-                                if (librarySelect.value !== folder.library_id) return;
+                                if (librarySelect.value !== String(folder.library_id)) return;
                                 const folderSelect = document.getElementById(librarySelect.dataset.folderTarget);
                                 updateFolderSelect(folderSelect, folder.library_id, folder.key);
                             });
+                            appendFolderTile(folder);
                             setStatus(`Utworzono folder „${folder.name}”.`);
                         }
 

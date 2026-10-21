@@ -40,6 +40,10 @@ final class MediaLibraryAdminTest extends TestCase
         $this->get(route('admin.media.index', ['library' => $library->getKey()]))
             ->assertOk()
             ->assertSee('Foldery w bibliotece')
+            ->assertSee('data-media-filter-library', false)
+            ->assertSee('data-media-folder-grid', false)
+            ->assertSee('data-media-folder-card="gallery"', false)
+            ->assertSee('appendFolderTile(folder)', false)
             ->assertSee('name="files[]"', false)
             ->assertSee('multiple', false)
             ->assertSee('media-bulk-form');
