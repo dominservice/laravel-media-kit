@@ -4,8 +4,6 @@ namespace Dominservice\MediaKit\Services;
 
 use Dominservice\MediaKit\Models\MediaAsset;
 use Dominservice\MediaKit\Models\MediaVariant;
-use Dominservice\MediaKit\Services\ImageFilters;
-use Dominservice\MediaKit\Services\VariantReuse;
 use Dominservice\MediaKit\Support\PathHelper;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Storage;
@@ -30,7 +28,8 @@ class ImageEngine
         try {
             $abs = Storage::disk($disk)->path($path);
             [$w, $h] = @getimagesize($abs) ?: [null, null];
-            return [$w ? (int)$w : null, $h ? (int)$h : null];
+
+            return [$w ? (int) $w : null, $h ? (int) $h : null];
         } catch (\Throwable $e) {
             return [null, null];
         }
@@ -43,7 +42,7 @@ class ImageEngine
     {
         $variants = (array) Config::get('media-kit.variants', []);
         $formatsPerVariant = (array) Config::get('media-kit.enabled_formats_per_variant', []);
-        $fallbackFormats = (array) Config::get('media-kit.formats_priority', ['avif','webp','jpeg','png']);
+        $fallbackFormats = (array) Config::get('media-kit.formats_priority', ['avif', 'webp', 'jpeg', 'png']);
 
         foreach ($variants as $name => $rules) {
             $enabled = $formatsPerVariant[$name] ?? ($formatsPerVariant['*'] ?? $fallbackFormats);
@@ -71,6 +70,10 @@ class ImageEngine
         string $disk,
         string $sourcePath
     ): ?MediaVariant {
+        if (! self::formatAllowedForAsset($asset, $format)) {
+            return null;
+        }
+
         // 0) Jeśli istnieje – zwróć
         $exists = $asset->variants()->where(['name' => $name, 'format' => $format])->first();
         if ($exists) {
@@ -83,7 +86,7 @@ class ImageEngine
         }
 
         // 2) Standardowa ścieżka – generacja
-        $quality   = Config::get("media-kit.default_quality.$format");
+        $quality = Config::get("media-kit.default_quality.$format");
         $targetRel = PathHelper::variantPath($asset, $name, $format);
         $targetAbs = Storage::disk($disk)->path($targetRel);
         $sourceAbs = Storage::disk($disk)->path($sourcePath);
@@ -94,17 +97,28 @@ class ImageEngine
         $size = file_exists($targetAbs) ? filesize($targetAbs) : null;
 
         return $asset->variants()->create([
-            'name'         => $name,
-            'format'       => $format,
-            'disk'         => $disk,
-            'path'         => $targetRel,
-            'width'        => $w,
-            'height'       => $h,
-            'quality'      => $quality,
-            'size'         => $size,
+            'name' => $name,
+            'format' => $format,
+            'disk' => $disk,
+            'path' => $targetRel,
+            'width' => $w,
+            'height' => $h,
+            'quality' => $quality,
+            'size' => $size,
             'generated_at' => now(),
-            'meta'         => null,
+            'meta' => null,
         ]);
+    }
+
+    private static function formatAllowedForAsset(MediaAsset $asset, string $format): bool
+    {
+        if (strtolower($format) !== 'png'
+            || ! (bool) Config::get('media-kit.generation.skip_png_for_jpeg_sources', true)) {
+            return true;
+        }
+
+        return strtolower((string) $asset->original_mime) !== 'image/jpeg'
+            && ! in_array(strtolower((string) $asset->original_ext), ['jpg', 'jpeg'], true);
     }
 
     /**
@@ -116,38 +130,40 @@ class ImageEngine
     protected static function applyTransform(string $srcAbs, string $dstAbs, array $rules, string $format, ?int $quality): array
     {
         [$w, $h, $type] = @getimagesize($srcAbs);
-        if (!$w || !$h) {
+        if (! $w || ! $h) {
             // nie rozpoznano obrazu — skopiuj jak jest
             @copy($srcAbs, $dstAbs);
+
             return [null, null];
         }
 
         // docelowe wymiary
-        $targetW = $rules['width']  ?? null;
+        $targetW = $rules['width'] ?? null;
         $targetH = $rules['height'] ?? null;
         if (isset($rules['fit']) && is_array($rules['fit'])) {
             [$targetW, $targetH] = $rules['fit'];
         }
-        [$newW, $newH] = self::fitSize((int)$w, (int)$h, $targetW ? (int)$targetW : null, $targetH ? (int)$targetH : null);
+        [$newW, $newH] = self::fitSize((int) $w, (int) $h, $targetW ? (int) $targetW : null, $targetH ? (int) $targetH : null);
 
         // wczytaj źródło (GD)
-        $srcImg = self::imageCreateFrom($srcAbs, (int)$type);
-        if (!$srcImg) {
+        $srcImg = self::imageCreateFrom($srcAbs, (int) $type);
+        if (! $srcImg) {
             @copy($srcAbs, $dstAbs);
+
             return [$w, $h];
         }
 
         $dstImg = imagecreatetruecolor($newW, $newH);
 
         // przezroczystość / tło
-        $transparentOut = in_array(strtolower($format), ['png','webp','avif'], true);
+        $transparentOut = in_array(strtolower($format), ['png', 'webp', 'avif'], true);
         if ($transparentOut) {
             imagealphablending($dstImg, false);
             imagesavealpha($dstImg, true);
             $transparent = imagecolorallocatealpha($dstImg, 0, 0, 0, 127);
             imagefilledrectangle($dstImg, 0, 0, $newW, $newH, $transparent);
         } else {
-            $bgHex   = (string) Config::get('media-kit.background_for_transparent_to_jpeg', '#ffffff');
+            $bgHex = (string) Config::get('media-kit.background_for_transparent_to_jpeg', '#ffffff');
             [$r,$g,$b] = self::hexToRgb($bgHex);
             $bgColor = imagecolorallocate($dstImg, $r, $g, $b);
             imagefilledrectangle($dstImg, 0, 0, $newW, $newH, $bgColor);
@@ -179,9 +195,9 @@ class ImageEngine
                 } else {
                     // fallback: webp-convert poradzi sobie bez GD::imagewebp
                     WebPConvert::convert($srcAbs, $dstAbs, [
-                        'quality'      => $quality ?? 75,
-                        'max-quality'  => $quality ?? 75,
-                        'converters'   => ['cwebp', 'imagick', 'gd', 'vips', 'ewww'],
+                        'quality' => $quality ?? 75,
+                        'max-quality' => $quality ?? 75,
+                        'converters' => ['cwebp', 'imagick', 'gd', 'vips', 'ewww'],
                     ]);
                 }
                 break;
@@ -191,7 +207,7 @@ class ImageEngine
                     imageavif($dstImg, $dstAbs, $quality ?? 45);
                 } else {
                     // fallback: wygeneruj WebP i zapisz pod docelowym rozszerzeniem
-                    $tmp = $dstAbs . '.tmp.webp';
+                    $tmp = $dstAbs.'.tmp.webp';
                     if (function_exists('imagewebp')) {
                         imagewebp($dstImg, $tmp, 80);
                     } else {
@@ -211,7 +227,8 @@ class ImageEngine
         imagedestroy($dstImg);
 
         [$nw, $nh] = @getimagesize($dstAbs) ?: [$newW, $newH];
-        return [(int)$nw, (int)$nh];
+
+        return [(int) $nw, (int) $nh];
     }
 
     /**
@@ -223,46 +240,50 @@ class ImageEngine
     {
         $upscale = (bool) Config::get('media-kit.upscale', false);
 
-        if (!$tw && !$th) {
+        if (! $tw && ! $th) {
             return [$w, $h];
         }
 
         if ($tw && $th) {
             $scale = min($tw / $w, $th / $h);
-            if ($scale > 1 && !$upscale) {
+            if ($scale > 1 && ! $upscale) {
                 return [$w, $h];
             }
+
             return [max(1, (int) round($w * $scale)), max(1, (int) round($h * $scale))];
         }
 
         if ($tw) {
-            if ($tw >= $w && !$upscale) {
+            if ($tw >= $w && ! $upscale) {
                 return [$w, $h];
             }
             $scale = $tw / $w;
+
             return [$tw, max(1, (int) round($h * $scale))];
         }
 
         // tylko wysokość
-        if ($th >= $h && !$upscale) {
+        if ($th >= $h && ! $upscale) {
             return [$w, $h];
         }
         $scale = $th / $h;
+
         return [max(1, (int) round($w * $scale)), $th];
     }
 
     /**
      * Wczytaj obraz przez GD w zależności od typu.
+     *
      * @return resource|\GdImage|false
      */
     protected static function imageCreateFrom(string $path, int $type)
     {
         return match ($type) {
             IMAGETYPE_JPEG => @imagecreatefromjpeg($path),
-            IMAGETYPE_PNG  => @imagecreatefrompng($path),
-            IMAGETYPE_GIF  => @imagecreatefromgif($path),
+            IMAGETYPE_PNG => @imagecreatefrompng($path),
+            IMAGETYPE_GIF => @imagecreatefromgif($path),
             IMAGETYPE_WEBP => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : @imagecreatefromjpeg($path),
-            default        => @imagecreatefromstring(@file_get_contents($path)),
+            default => @imagecreatefromstring(@file_get_contents($path)),
         };
     }
 
@@ -275,6 +296,7 @@ class ImageEngine
         if (strlen($hex) === 3) {
             $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
         }
+
         return [
             hexdec(substr($hex, 0, 2)),
             hexdec(substr($hex, 2, 2)),

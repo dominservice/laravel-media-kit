@@ -35,6 +35,25 @@ return [
     // Tryb generacji wariantów: eager | lazy
     'mode' => env('MEDIA_KIT_MODE', 'eager'),
 
+    // Oryginały są normalizowane przed zapisem, aby dataset i storage nie
+    // przechowywały zdjęć wielokrotnie większych niż warianty publiczne.
+    'originals' => [
+        'enabled' => true,
+        'max_dimension' => 2560,
+        'max_file_size_kb' => 2048,
+        'jpeg_quality' => 85,
+        'webp_quality' => 82,
+        'avif_quality' => 55,
+        'png_compression' => 7,
+        'only_if_smaller' => true,
+        'deduplicate' => true,
+    ],
+
+    'generation' => [
+        // Fotograficzny JPEG nie potrzebuje wielokrotnie większego fallbacku PNG.
+        'skip_png_for_jpeg_sources' => true,
+    ],
+
     // Definicje wariantów (rozmiary)
     'variants' => [
         'thumb' => ['fit' => [320, 320]],

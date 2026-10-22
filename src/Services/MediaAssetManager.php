@@ -16,8 +16,16 @@ class MediaAssetManager
             }
         }
 
+        $originalIsShared = MediaAsset::query()
+            ->where('disk', $asset->disk)
+            ->where('original_path', $asset->original_path)
+            ->whereKeyNot($asset->getKey())
+            ->exists();
+
         try {
-            Storage::disk($asset->disk)->delete($asset->original_path);
+            if (! $originalIsShared) {
+                Storage::disk($asset->disk)->delete($asset->original_path);
+            }
         } catch (\Throwable) {
         }
 
