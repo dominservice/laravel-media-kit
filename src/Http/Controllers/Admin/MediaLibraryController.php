@@ -5,6 +5,7 @@ namespace Dominservice\MediaKit\Http\Controllers\Admin;
 use Dominservice\MediaKit\Models\MediaAsset;
 use Dominservice\MediaKit\Models\MediaFolder;
 use Dominservice\MediaKit\Models\MediaLibrary;
+use Dominservice\MediaKit\Models\MediaVariant;
 use Dominservice\MediaKit\Services\ImageEngine;
 use Dominservice\MediaKit\Services\MediaAssetManager;
 use Dominservice\MediaKit\Services\MediaLibraryBrowser;
@@ -95,18 +96,14 @@ class MediaLibraryController extends Controller
         abort_unless(str_starts_with((string) $mediaAsset->original_mime, 'image/'), 404);
 
         $variantName = $this->thumbnailVariantName();
-        $format = $this->formatPriority();
-        $variant = $mediaAsset->variants
-            ->where('name', $variantName)
-            ->sortBy(fn ($item): int => ($index = array_search($item->format, $format, true)) === false ? count($format) : $index)
-            ->first();
+        $variant = $this->existingThumbnailVariant($mediaAsset);
 
         if (! $variant && $mediaAsset->original_ext !== 'svg') {
             try {
                 $rules = (array) config("media-kit.variants.{$variantName}", ['fit' => [320, 320]]);
                 $enabledFormats = (array) (config("media-kit.enabled_formats_per_variant.{$variantName}")
                     ?? config('media-kit.enabled_formats_per_variant.*')
-                    ?? $format);
+                    ?? $this->formatPriority());
 
                 foreach ($enabledFormats as $enabledFormat) {
                     ImageEngine::generateVariant(
@@ -120,17 +117,14 @@ class MediaLibraryController extends Controller
                 }
 
                 $mediaAsset->load('variants');
-                $variant = $mediaAsset->variants
-                    ->where('name', $variantName)
-                    ->sortBy(fn ($item): int => ($index = array_search($item->format, $format, true)) === false ? count($format) : $index)
-                    ->first();
+                $variant = $this->existingThumbnailVariant($mediaAsset);
             } catch (Throwable) {
                 $variant = null;
             }
         }
 
         if ($variant && Storage::disk($variant->disk)->exists($variant->path)) {
-            return redirect()->route('mediakit.media.show', [$mediaAsset->uuid, $variantName, $variant->format]);
+            return redirect()->route('mediakit.media.show', [$mediaAsset->uuid, $variant->name, $variant->format]);
         }
 
         if ($mediaAsset->original_ext === 'svg') {
@@ -554,8 +548,8 @@ class MediaLibraryController extends Controller
             'height' => $asset->height,
             'title' => (string) data_get($asset->meta, 'title', ''),
             'alt' => (string) data_get($asset->meta, 'alt', ''),
-            'preview_url' => $isImage && Route::has($thumbnailRoute)
-                ? route($thumbnailRoute, $asset->uuid)
+            'preview_url' => $isImage
+                ? $this->previewUrl($asset, $thumbnailRoute)
                 : null,
             'full_url' => str_starts_with((string) $asset->original_mime, 'video/')
                 ? Storage::disk($asset->disk)->url($asset->original_path)
@@ -617,6 +611,60 @@ class MediaLibraryController extends Controller
         }
 
         return (string) ($configured[0] ?? 'thumb');
+    }
+
+    private function previewUrl(MediaAsset $asset, string $thumbnailRoute): ?string
+    {
+        $variant = $this->existingThumbnailVariant($asset);
+
+        if ($variant instanceof MediaVariant) {
+            try {
+                return Storage::disk($variant->disk)->url($variant->path);
+            } catch (Throwable) {
+                if (Route::has('mediakit.media.show')) {
+                    return route('mediakit.media.show', [$asset->uuid, $variant->name, $variant->format]);
+                }
+            }
+        }
+
+        return Route::has($thumbnailRoute)
+            ? route($thumbnailRoute, $asset->uuid)
+            : null;
+    }
+
+    private function existingThumbnailVariant(MediaAsset $asset): ?MediaVariant
+    {
+        $asset->loadMissing('variants');
+        $variants = $asset->variants;
+        $variantNames = array_values(array_unique([
+            $this->thumbnailVariantName(),
+            'thumb',
+            'mobile_thumb',
+            'tablet_thumb',
+            'desktop_thumb',
+            'sm',
+        ]));
+
+        foreach ($variantNames as $variantName) {
+            foreach ($this->formatPriority() as $format) {
+                $variant = $variants->first(
+                    static fn (MediaVariant $candidate): bool => $candidate->name === $variantName
+                        && $candidate->format === $format,
+                );
+
+                if ($variant instanceof MediaVariant) {
+                    return $variant;
+                }
+            }
+
+            $variant = $variants->firstWhere('name', $variantName);
+
+            if ($variant instanceof MediaVariant) {
+                return $variant;
+            }
+        }
+
+        return null;
     }
 
     /** @return array<int, string> */

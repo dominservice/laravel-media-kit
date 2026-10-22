@@ -135,8 +135,11 @@ final class MediaLibraryAdminTest extends TestCase
 
         $previewUrl = $response->json('assets.0.preview_url');
         $this->assertIsString($previewUrl);
-        $this->assertStringContainsString('/admin/media/thumbnail/', $previewUrl);
-        $this->get($previewUrl)->assertRedirect();
+        $asset = MediaAsset::query()->with('variants')->findOrFail($response->json('assets.0.uuid'));
+        $thumbnail = $asset->variants->firstWhere('name', 'thumb');
+        $this->assertNotNull($thumbnail);
+        $this->assertSame(Storage::disk($thumbnail->disk)->url($thumbnail->path), $previewUrl);
+        $this->assertStringNotContainsString('/admin/media/thumbnail/', $previewUrl);
 
         $this->assertDatabaseCount('media_assets', 2);
         $this->assertDatabaseHas('media_folders', [
@@ -144,6 +147,24 @@ final class MediaLibraryAdminTest extends TestCase
             'key' => 'events',
         ]);
         $this->assertSame(2, $library->media()->where('collection', 'events')->count());
+    }
+
+    public function test_browser_uses_the_thumbnail_endpoint_only_when_a_public_variant_is_missing(): void
+    {
+        $library = MediaLibrary::query()->create(['key' => 'client', 'name' => 'Client']);
+        $asset = $this->createAsset($library, 'gallery', 'missing-variant.jpg');
+
+        $response = $this->getJson(route('admin.media.browse', [
+            'library' => $library->getKey(),
+        ]));
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('data.0.uuid', $asset->uuid);
+        $this->assertStringContainsString(
+            '/admin/media/thumbnail/'.$asset->uuid,
+            (string) $response->json('data.0.preview_url'),
+        );
     }
 
     public function test_library_and_folder_can_be_created_dynamically(): void
