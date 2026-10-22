@@ -49,6 +49,30 @@ final class MediaLibraryAdminTest extends TestCase
             ->assertSee('media-bulk-form');
     }
 
+    public function test_library_page_uses_the_direct_url_of_an_existing_public_thumbnail(): void
+    {
+        $library = MediaLibrary::query()->create(['key' => 'client', 'name' => 'Client']);
+        $asset = $this->createAsset($library, 'gallery', 'photo.jpg');
+        $thumbnailPath = 'media/variants/photo__thumb.jpeg';
+        Storage::disk('public')->put($thumbnailPath, 'thumbnail');
+        $asset->variants()->create([
+            'name' => 'thumb',
+            'format' => 'jpeg',
+            'disk' => 'public',
+            'path' => $thumbnailPath,
+            'width' => 160,
+            'height' => 160,
+            'size' => 9,
+            'generated_at' => now(),
+        ]);
+
+        $response = $this->get(route('admin.media.index', ['library' => $library->getKey()]));
+
+        $response
+            ->assertSee(Storage::disk('public')->url($thumbnailPath), false)
+            ->assertDontSee(route('admin.media.thumbnail', $asset->uuid), false);
+    }
+
     public function test_browser_searches_only_the_selected_library_and_paginates_results(): void
     {
         $selected = MediaLibrary::query()->create(['key' => 'selected', 'name' => 'Selected']);

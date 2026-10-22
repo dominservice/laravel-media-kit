@@ -36,6 +36,7 @@ class MediaLibraryController extends Controller
         $perPage = max(6, min(100, (int) config('media-kit.admin.library.per_page', 24)));
         $assets = $browser->assets($library, $filters)->paginate($perPage)->withQueryString();
         $libraries = $browser->libraries();
+        $thumbnailRoute = $this->adminRoute('thumbnail');
 
         return view((string) config('media-kit.admin.library.view', 'mediakit::admin.library.index'), [
             'library' => $library,
@@ -48,6 +49,11 @@ class MediaLibraryController extends Controller
             'filters' => $filters,
             'mediaKitAdmin' => (array) config('media-kit.admin', []),
             'assetUsages' => $usageInspector->forAssets($assets->getCollection()),
+            'assetPreviewUrls' => $assets->getCollection()->mapWithKeys(
+                fn (MediaAsset $asset): array => [
+                    (string) $asset->getKey() => $this->previewUrl($asset, $thumbnailRoute),
+                ],
+            ),
         ]);
     }
 

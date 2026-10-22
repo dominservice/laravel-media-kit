@@ -238,7 +238,7 @@
                                                         <div class="small text-muted">{{ strtoupper((string) $asset->original_ext) }}</div>
                                                     </div>
                                                 @else
-                                                    <img src="{{ route($routePrefix . '.thumbnail', $asset->uuid) }}"
+                                                    <img src="{{ $assetPreviewUrls->get((string) $asset->getKey()) }}"
                                                          alt="{{ $alt ?: ($title ?: 'Podgląd grafiki') }}"
                                                          class="img-fluid w-100"
                                                          style="height: 200px; object-fit: contain;"
