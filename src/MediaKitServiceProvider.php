@@ -17,6 +17,8 @@ class MediaKitServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+
         $this->publishes([
             __DIR__.'/../config/media-kit.php' => config_path('media-kit.php'),
         ], 'mediakit-config');

@@ -76,6 +76,28 @@ final class MediaLibraryAdminTest extends TestCase
         $this->assertNotContains('campaign-other.jpg', $response->json('data.*.original_path'));
     }
 
+    public function test_browser_filters_reserved_folder_name_and_returns_the_requested_page(): void
+    {
+        $library = MediaLibrary::query()->create(['key' => 'client', 'name' => 'Client']);
+
+        foreach (range(1, 7) as $number) {
+            $this->createAsset($library, 'Miasto & Rejs', "cruise-{$number}.jpg");
+        }
+
+        $this->getJson(route('admin.media.browse', [
+            'library' => $library->getKey(),
+            'collection' => 'Miasto & Rejs',
+            'page' => 2,
+            'per_page' => 6,
+        ]))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('active.collection', 'Miasto & Rejs')
+            ->assertJsonPath('pagination.current_page', 2)
+            ->assertJsonPath('pagination.last_page', 2)
+            ->assertJsonPath('pagination.total', 7);
+    }
+
     public function test_missing_alt_filter_returns_only_images_without_alt_text(): void
     {
         $library = MediaLibrary::query()->create(['key' => 'client', 'name' => 'Client']);
