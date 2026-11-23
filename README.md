@@ -1,4 +1,10 @@
-# Dominservice Laravel Media Kit
+# Laravel Media Kit
+
+<img src="docs/dominpress-logo.webp" alt="Laravel Media Kit logo showing overlapping image frames with a mountain and sun" width="128" height="128">
+
+Laravel Media Kit stores reusable images and video in Laravel and delivers responsive image variants from a shared media library.
+
+Developed by Mateusz Domin at [Domin Software](https://dominsoftware.it/). Media Kit also provides the media layer for [DominPress](https://dominsoftware.it/dominpress) through its integration with [Laravel CMS](https://github.com/dominservice/laravel-cms).
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/dominservice/laravel-media-kit.svg?style=flat-square)](https://packagist.org/packages/dominservice/laravel-media-kit)
 [![Total Downloads](https://img.shields.io/packagist/dt/dominservice/laravel-media-kit.svg?style=flat-square)](https://packagist.org/packages/dominservice/laravel-media-kit)
@@ -9,13 +15,6 @@
 It is designed to work well in two modes at once:
 - as a clean standalone media toolkit,
 - as the media backbone for `dominservice/laravel-cms` and larger modular systems.
-
-## Requirements
-
-- PHP 8.3+
-- Laravel 13.32+
-
-The current `2.x` line targets DominPress and Laravel 13. Laravel 9–12 remain available through the previous `1.x` line.
 
 ## Key Features
 
@@ -30,6 +29,13 @@ The current `2.x` line targets DominPress and Laravel 13. Laravel 9–12 remain 
 - publishable package views for host-project theming,
 - CDN and signed URL support.
 
+## Requirements
+
+- PHP 8.3+
+- Laravel 13.32+
+
+The current `2.x` line targets DominPress and Laravel 13. Laravel 9–12 remain available through the previous `1.x` line.
+
 ## Installation
 
 ```bash
@@ -42,13 +48,14 @@ php artisan vendor:publish --provider="Dominservice\MediaKit\MediaKitServiceProv
 php artisan migrate
 ```
 
-## Core Usage
+## Quick Start
 
 ### Add media to a model
 
 ```php
 use Dominservice\MediaKit\Traits\HasMedia;
 use Dominservice\MediaKit\Traits\HasMediaKinds;
+use Illuminate\Database\Eloquent\Model;
 
 class Post extends Model
 {
@@ -58,8 +65,20 @@ class Post extends Model
 ```
 
 ```php
-$post->addMedia($request->file('cover'), 'featured');
+$asset = $post->addMedia($request->file('cover'), 'featured');
 ```
+
+Pass the returned asset to your Blade view.
+
+```blade
+<x-media-picture :asset="$asset" variant="md" alt="Article cover" />
+```
+
+When variants are available, the component renders a `<picture>` with AVIF and WebP sources and a fallback image. With only the original asset, it renders an `<img>` pointing to the original.
+
+### Check image format support
+
+Run `php artisan media:diagnose` to inspect GD, Imagick, WebP and AVIF support on the deployment host. Use an encoder with AVIF support before serving AVIF variants. In the current GD pipeline, the fallback can write WebP data to an `.avif` path when `imageavif()` is unavailable.
 
 ### Reuse an existing asset
 
@@ -177,6 +196,14 @@ You can override:
 
 This allows each project to adapt the package without forking the package logic.
 
+## Support
+
+Report package issues on [GitHub](https://github.com/dominservice/laravel-media-kit/issues).
+
+If this package helps you, you can buy me a coffee to support its maintenance.
+
+[![Buy me a coffee on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/dominservice)
+
 ## License
 
-MIT
+[MIT](LICENSE)

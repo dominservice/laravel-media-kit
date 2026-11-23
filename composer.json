@@ -1,11 +1,22 @@
 {
   "name": "dominservice/laravel-media-kit",
-  "description": "Lekki pipeline obrazów i wideo dla Laravela (shared hosting ready): warianty, AVIF/WebP, <picture>, eager/lazy generacja, narzędzia CLI.",
+  "description": "Laravel media library for reusable image and video assets, responsive image variants and admin media management.",
   "type": "library",
+  "keywords": ["laravel", "media-library", "responsive-images", "webp", "avif"],
+  "homepage": "https://github.com/dominservice/laravel-media-kit",
   "license": "MIT",
   "authors": [
-    { "name": "Dominservice", "email": "biuro@dominservice.it", "role": "Developer"}
+    {
+      "name": "Mateusz Domin",
+      "email": "biuro@dominsoftware.it",
+      "role": "Developer",
+      "homepage": "https://dominsoftware.it/"
+    }
   ],
+  "support": {
+    "source": "https://github.com/dominservice/laravel-media-kit",
+    "issues": "https://github.com/dominservice/laravel-media-kit/issues"
+  },
   "require": {
     "php": "^8.3",
     "illuminate/support": "^13.32",
